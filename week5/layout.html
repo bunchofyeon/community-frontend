@@ -1,0 +1,42 @@
+<!-- week5/layout.html -->
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>piney community</title>
+  </head>
+  <body>
+    <!-- ⚠️ 헤더는 JS가 렌더링 -->
+    <header id="app-header"></header>
+
+    <div class="layout">
+      <!-- 사이드바: 로그인한 경우에만 JS에서 표시 -->
+      <aside class="sidebar" data-guard="auth" hidden>
+        <nav>
+          <a href="posts.html" data-key="posts">게시판</a>
+          <a href="post-create.html" data-key="create">글 작성</a>
+          <a href="my-page.html" data-key="mypage">마이페이지 홈</a>
+          <a href="profile.html" data-key="profile">회원 정보 수정</a>
+        </nav>
+      </aside>
+
+      <!-- 페이지 본문이 들어올 자리 -->
+      <main id="app-content"></main>
+    </div>
+
+    <!-- 푸터: 항상 노출 -->
+    <footer class="footer">
+      <div class="footer-inner">
+        <span>© 2025 piney community</span>
+        <span>All rights reserved.</span>
+      </div>
+    </footer>
+
+    <!-- 레이아웃 주입 & 헤더 렌더 -->
+    <script type="module">
+      import { loadLayout } from './scripts/layout.js';
+      import { renderHeader } from './scripts/common.js';
+      loadLayout().then(() => renderHeader());
+    </script>
+  </body>
+</html>
