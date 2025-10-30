@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="styles/style.css" />
   <style>
     main.container { padding-top: 80px; padding-bottom: 60px; }
-    .grid { display:grid; gap:16px; grid-template-columns: 1fr; }
+    .grid { display:grid; grid-template-columns: 1fr; }
     @media (min-width: 960px){ .grid { grid-template-columns: 1fr 1fr; } }
 
     /* 상단 요약 카드 */
@@ -19,7 +19,6 @@
     .stat { padding:6px 10px; border:1px solid var(--line); border-radius:999px; background:#fff; font-size:var(--fz-sm); }
 
     .card-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
-    .section-actions { display:flex; gap:8px; }
     .table-head, .row { display:grid; grid-template-columns: 3fr 1fr 1fr; gap:8px; padding:12px 0; }
     .table-head { color:var(--muted); font-weight:700; border-bottom:1px solid var(--line); }
     .row + .row { border-top:1px solid var(--line); }
@@ -30,26 +29,19 @@
     .page-btn { min-width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--line); border-radius:8px; background:#fff; }
     .page-btn.active { background:var(--primary); color:#111; border-color:var(--primary); }
     .page-btn.disabled { color:var(--muted); pointer-events:none; }
-
-    .danger-zone { margin-top:16px; display:flex; justify-content:flex-end; }
   </style>
 </head>
 <body>
-  <script type="module">
-    import { loadLayout } from './scripts/layout.js';
-    import { renderHeader } from './scripts/common.js';
-    // 레이아웃 먼저 적용 → 그 다음 헤더 렌더
-    loadLayout().then(() => renderHeader()); 
-  </script>
   <div id="app-header"></div>
 
   <main class="container">
     <h1 class="page-title">마이페이지</h1>
 
     <!-- 상단 요약 카드 -->
-    <section class="card" id="summaryCard">
+    <section class="card section" id="summaryCard">
       <div class="summary">
-        <img id="avatar" class="avatar" src="/assets/img/default-avatar.png" alt="avatar">
+        <!-- 상대경로로 했음,프론트 서버 종류와 상관없이 로드됨 -->
+        <img id="avatar" class="avatar" src="./assets/img/comong.png" alt="프로필 이미지">
         <div>
           <p class="name" id="nickname">닉네임</p>
           <p class="meta" id="email">user@example.com</p>
@@ -58,19 +50,18 @@
             <span class="stat">내 댓글 <b id="commentCount">0</b></span>
           </div>
         </div>
-        <div class="section-actions" style="margin-left:auto">
+        <div class="actions-col">
           <a class="btn btn-light" href="profile.html">회원정보 수정</a>
+          <button id="withdrawBtn" class="btn btn-light">회원 탈퇴</button>
         </div>
       </div>
     </section>
 
     <!-- 리스트 2개 (내 글 / 내 댓글) -->
-    <div class="grid">
+    <div class="grid g-24 section">
       <!-- 내가 쓴 글 -->
       <section class="card">
-        <div class="card-head">
-          <h2 class="h4">내가 쓴 글</h2>
-        </div>
+        <div class="card-head"><h2 class="h4">내가 쓴 글</h2></div>
         <div class="table-head">
           <div>제목</div><div>작성일</div><div>수정일</div>
         </div>
@@ -80,23 +71,14 @@
 
       <!-- 내가 쓴 댓글 -->
       <section class="card">
-        <div class="card-head">
-          <h2 class="h4">내가 쓴 댓글</h2>
-        </div>
-        <div class="table-head">
-          <div>내용</div><div>작성일</div><div>원글</div>
+        <div class="card-head"><h2 class="h4">내가 쓴 댓글</h2></div>
+        <div class="table-head table-grid-3">
+          <div>내용</div><div>작성일</div><div>수정일</div>
         </div>
         <div id="myComments"></div>
         <nav id="pgMyComments" class="pagination"></nav>
       </section>
     </div>
-
-    <!-- 하단 탈퇴 버튼 -->
-    <section class="card">
-      <div class="danger-zone">
-        <button id="withdrawBtn" class="btn danger">회원 탈퇴</button>
-      </div>
-    </section>
   </main>
 
   <script type="module" src="scripts/mypage.js"></script>

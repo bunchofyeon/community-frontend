@@ -20,7 +20,7 @@
     }
 
     .comment-list { 
-      margin-bottom: 20x;
+      margin-bottom: 20px;
     }
 
     .comment-item { 
@@ -33,29 +33,24 @@
 
     .comment-body .author { font-weight:600; }
     .comment-actions .btn { height:28px; font-size:12px; padding:0 8px; margin-left:6px; }
+
     .comment-form { display:flex; gap:8px; align-items:flex-start; margin-top:10px;}
     .comment-form .input { flex:1; height:44px; padding:10px 12px; }
-    .pagination { display:flex; gap:8px; margin-top:10px; }
-    .page-btn { border:1px solid var(--line); border-radius:8px; padding:0 10px; min-width:34px; height:32px; display:flex; align-items:center; justify-content:center; text-decoration:none; }
-    .page-btn.active { background: var(--primary); color:#fff; border-color: var(--primary); pointer-events:none; }
-    .page-btn.disabled { color: var(--muted); pointer-events:none; }
-    
+
     /* 버튼 스타일 */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  font-weight: 600;
-  height: 40px;
-  padding: 0 18px;
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: filter 0.15s ease, box-shadow 0.15s ease;
-}
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      font-weight: 600;
+      height: 40px;
+      padding: 0 18px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: filter 0.15s ease, box-shadow 0.15s ease;
+    }
 
-
-    /* 삭제 버튼 */
     .btn.danger {
       background: var(--accent);
       color: #111;
@@ -66,46 +61,51 @@
       box-shadow: 0 6px 18px rgba(254,209,54,.35);
     }
 
-    /* 수정 버튼 */
     .btn.ghost,
     .btn.xs.edit {
       background: #fff;
       color: #111111;
       border: 1px solid var(--line);
       border-radius: 10px;
-      font-weight: 600;
     }
-
     .btn.ghost:hover,
     .btn.xs.edit:hover {
       box-shadow: 0 4px 14px rgba(0,0,0,.06);
     }
 
-    /* 댓글 수정/삭제 버튼 간격 */
     .comment-actions .btn {
       height: 32px;
       font-size: 13px;
       padding: 0 10px;
     }
-/* 댓글 입력 폼 버튼도 노란색 */
-.comment-form .btn {
-  background: var(--accent, #fed136);
-  color: #111;
-  border: 1px solid rgba(0,0,0,.08);
-}
-.comment-form .btn:hover {
-  filter: brightness(0.98);
-  box-shadow: 0 6px 18px rgba(254,209,54,.35);
-}
+
+    /* 댓글 입력 폼 버튼 노란색 */
+    .comment-form .btn {
+      background: var(--accent, #fed136);
+      color: #111;
+      border: 1px solid rgba(0,0,0,.08);
+    }
+    .comment-form .btn:hover {
+      filter: brightness(0.98);
+      box-shadow: 0 6px 18px rgba(254,209,54,.35);
+    }
+
+    /* 하이라이트 (특정 댓글 포커스용) */
+    .focus-highlight {
+      outline: 2px solid #fed136;
+      background: rgba(254,209,54,.12);
+      transition: background .6s ease;
+    }
   </style>
 </head>
 <body>
   <script type="module">
-  import { loadLayout } from './scripts/layout.js';
-  import { renderHeader } from './scripts/common.js';
-  // 레이아웃 먼저 적용 → 그 다음 헤더 렌더
-  loadLayout().then(() => renderHeader()); 
-</script>
+    import { loadLayout } from './scripts/layout.js';
+    import { renderHeader } from './scripts/common.js';
+    // 레이아웃 먼저 적용 → 그 다음 헤더 렌더
+    loadLayout().then(() => renderHeader()); 
+  </script>
+
   <div id="app-header"></div>
 
   <main class="container">
@@ -114,7 +114,8 @@
     <div class="comment-box">
       <h3>댓글</h3>
       <div id="commentList" class="comment-list"></div>
-      <nav id="commentPagination" class="pagination"></nav>
+      <!-- 무한스크롤 트리거용 센티넬 -->
+      <div id="commentsSentinel" style="height:1px;"></div>
 
       <form id="commentForm" class="comment-form">
         <input id="commentContent" class="input" placeholder="댓글 입력..." required />

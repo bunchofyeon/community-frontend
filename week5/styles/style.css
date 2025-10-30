@@ -550,3 +550,32 @@ main {
   gap: 10px;
   margin-top: 8px;
 }
+/* === My Page 전용 보강 === */
+.grid.g-24 { gap: 24px; }              /* 카드 사이 여백 확대 */
+.section + .section { margin-top: 20px; } /* 섹션 간 기본 간격 */
+
+.withdraw-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 24px 0 8px;                  /* 위·아래 여백 */
+}
+
+/* 버튼: 작은 사이즈 + 연한 회색 */
+.btn.sm { height: 34px; padding: 0 12px; font-size: var(--fz-sm); }
+.btn-muted {
+  background: #f1f3f5;                 /* 연회색 */
+  color: #495057;
+  border: 1px solid #e9ecef;
+}
+.btn-muted:hover { background: #e9ecef; }
+/* 마이페이지 요약 카드: 버튼을 세로로 쌓기 */
+.summary .actions-col{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-left: auto;   /* 오른쪽 정렬 */
+}
+/* 둘 다 같은 크기 보장 (원하면 값 조정 가능) */
+.summary .actions-col .btn { width: 140px; }
+
+
