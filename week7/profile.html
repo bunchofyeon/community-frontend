@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>프로필 수정 · Community</title>
+  <link rel="stylesheet" href="styles/style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+</head>
+<body>
+  <script type="module">
+  import { loadLayout } from './scripts/layout.js';
+  import { renderHeader } from './scripts/common.js';
+  // 레이아웃 먼저 적용 → 그 다음 헤더 렌더
+  loadLayout().then(() => renderHeader()); 
+</script>
+  <div id="app-header"></div>
+
+  <main class="container page-padding">
+    <div class="form-wrap" style="max-width:560px;margin:0 auto;">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h1 class="h4 mb-16">프로필 수정</h1>
+
+          <form id="profileForm" novalidate>
+            <div class="mb-12">
+              <label for="nickname" class="form-label">닉네임</label>
+              <input id="nickname" type="text" class="form-control" placeholder="새 닉네임" maxlength="20" />
+            </div>
+
+            <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+
+            <div class="mb-12">
+              <label for="currentPassword" class="form-label">현재 비밀번호 <span class="badge">필수</span></label>
+              <input id="currentPassword" type="password" class="form-control" placeholder="현재 비밀번호" autocomplete="current-password" required />
+              <div class="form-hint">비밀번호를 변경하지 않더라도 현재 비밀번호는 입력해야 저장됩니다.</div>
+            </div>
+
+            <div class="mb-12">
+              <label for="newPassword" class="form-label">새 비밀번호 (선택)</label>
+              <input id="newPassword" type="password" class="form-control" placeholder="8자 이상" autocomplete="new-password" />
+            </div>
+
+            <div class="mb-16">
+              <label for="newPasswordCheck" class="form-label">새 비밀번호 확인 (선택)</label>
+              <input id="newPasswordCheck" type="password" class="form-control" placeholder="다시 입력" autocomplete="new-password" />
+              <div class="form-hint">비밀번호를 변경하지 않으려면 위 두 칸을 비워 두세요.</div>
+            </div>
+
+            <div class="actions" style="display:flex;gap:8px;justify-content:flex-end;">
+              <a href="posts.html" class="btn btn-light">취소</a>
+              <button type="submit" class="btn btn-accent" id="saveBtn">저장</button>
+            </div>
+          </form>
+
+          <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+
+          <div class="danger-zone">
+            <h2 class="h6 mb-8">회원 탈퇴</h2>
+            <p class="text-muted mb-12">계정과 데이터가 삭제됩니다. 이 작업은 되돌릴 수 없습니다.</p>
+            <button class="btn btn-danger" id="deleteBtn">회원 탈퇴</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="./scripts/profile.js"></script>
+</body>
+</html>

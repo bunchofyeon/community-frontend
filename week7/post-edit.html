@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>게시글 수정 · Community</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles/style.css" />
+  <style>
+    main.container { padding-top: 100px; padding-bottom: 80px; }
+    .form-wrap { max-width: 920px; margin: 0 auto; }
+
+    .mb-12 { margin-bottom: 28px; }
+    .mb-16 { margin-bottom: 36px; }
+
+    .card-body { padding: 32px; }
+  </style>
+</head>
+<body>
+  <!-- 먼저 레이아웃 로드 → 헤더 렌더 -->
+  <script type="module">
+    import { loadLayout } from './scripts/layout.js';
+    import { renderHeader } from './scripts/common.js';
+    loadLayout().then(() => renderHeader('posts'));
+  </script>
+
+  <!-- 공통 헤더 -->
+  <div id="app-header"></div>
+
+  <main class="container page-padding">
+    <div class="form-wrap">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h1 class="h4 mb-16">게시글 수정</h1>
+
+          <form id="editForm" novalidate>
+            <div class="mb-12">
+              <label class="form-label" for="title">제목</label>
+              <!-- 입력단에서도 26자 제한 -->
+              <input
+                id="title"
+                class="form-control"
+                placeholder="제목을 입력하세요"
+                required
+                maxlength="26"
+                autocomplete="off"
+              />
+              <div class="form-hint">최대 26자</div>
+            </div>
+
+            <div class="mb-16">
+              <label class="form-label" for="content">내용</label>
+              <textarea
+                id="content"
+                class="form-control"
+                rows="12"
+                placeholder="내용을 입력하세요"
+                required
+              ></textarea>
+            </div>
+
+            <div class="actions">
+              <a class="btn btn-light" id="cancelBtn" href="#">취소</a>
+              <button class="btn btn-accent" type="submit" id="saveBtn">수정 완료</button>
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 기능 스크립트 -->
+  <script type="module" src="scripts/postEdit.js"></script>
+</body>
+</html>

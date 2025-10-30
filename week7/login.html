@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>로그인</title>
+  <link rel="stylesheet" href="styles/style.css" />
+</head>
+<body>
+  <div id="app-header"></div>
+  <main class="container">
+    <div class="card" style="max-width:420px; margin:40px auto;">
+      <h2>로그인</h2>
+      <form id="loginForm">
+        <input id="email" class="input" type="email" placeholder="이메일" required />
+        <input id="password" class="input" type="password" placeholder="비밀번호" required />
+        <div class="actions">
+          <button class="btn" type="submit">로그인</button>
+          <a class="btn ghost" href="signup.html">회원가입</a>
+        </div>
+      </form>
+    </div>
+  </main>
+  <script type="module" src="scripts/login.js"></script>
+</body>
+</html>
