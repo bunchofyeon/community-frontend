@@ -1,8 +1,10 @@
-import { renderHeader, requireAuth } from './common.js';
+// week5/scripts/posts.js
+import { renderHeader /*, requireAuth */ } from './common.js';
 import { apiFetch } from './api.js';
 
 renderHeader('posts');
-requireAuth(); // 목록 페이지 로그인 필요..?
+// 공개 목록이면 requireAuth()는 생략 가능
+// requireAuth();
 
 const listEl = document.getElementById('postList');
 const pagerEl = document.getElementById('pagination');
@@ -13,36 +15,34 @@ function fmtDate(iso) {
   return d.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
 }
 function getUiPage() {
-  const url = new URL(location.href);
-  const p = parseInt(url.searchParams.get('page') || '1', 10);
-  return Number.isNaN(p) || p < 1 ? 1 : p; // UI는 1부터
+  const p = parseInt(new URL(location.href).searchParams.get('page') || '1', 10);
+  return Number.isNaN(p) || p < 1 ? 1 : p;
 }
 function setUiPage(p) {
   const url = new URL(location.href);
   url.searchParams.set('page', String(p));
-  history.pushState(null, '', url); // 주소만 갱신
+  history.pushState(null, '', url);
 }
 
-// 렌더링
 function renderList(items) {
   if (!items.length) {
     listEl.innerHTML = `<div class="empty">게시글이 없습니다.</div>`;
     return;
   }
   listEl.innerHTML = items.map(p => {
-    const title = (p.title ?? '').trim() || '(제목 없음)';
-    const author = p.authorNickname ?? p.nickname ?? '익명';
+    const title   = (p.title ?? '').trim() || '(제목 없음)';
+    const author  = p.authorNickname ?? p.nickname ?? '익명';
     const created = fmtDate(p.createdAt);
     const updated = fmtDate(p.updatedAt);
+    const views   = p.viewCount ?? 0;
 
     return `
       <div class="post-row">
-        <div class="col title">
-          <a href="post-detail.html?id=${p.id}">${title}</a>
-        </div>
+        <div class="col title"><a href="post-detail.html?id=${p.id}">${title}</a></div>
         <div class="col author">${author}</div>
         <div class="col date">${created}</div>
         <div class="col update">${updated}</div>
+        <div class="col views">${views}</div>
       </div>
     `;
   }).join('');
@@ -62,30 +62,23 @@ function renderPagination(uiPage, totalPages) {
     });
     return a;
   };
-
   const start = Math.max(1, uiPage - 2);
-  const end = Math.min(totalPages, Math.max(start + 4, uiPage)); // 최대 5개 노출
-
+  const end   = Math.min(totalPages, Math.max(start + 4, uiPage));
   pagerEl.innerHTML = '';
   pagerEl.appendChild(makeBtn('‹', Math.max(1, uiPage - 1), uiPage === 1));
-  for (let p = start; p <= end; p++) {
-    pagerEl.appendChild(makeBtn(String(p), p, false, p === uiPage));
-  }
+  for (let p = start; p <= end; p++) pagerEl.appendChild(makeBtn(String(p), p, false, p === uiPage));
   pagerEl.appendChild(makeBtn('›', Math.min(totalPages, uiPage + 1), uiPage === totalPages));
 }
 
-// ===== 데이터 로드 =====
 async function loadPosts() {
   try {
-    const uiPage = getUiPage();     // 1,2,3...
-    const page = uiPage - 1;        // 서버는 0부터
+    const uiPage = getUiPage();
+    const page = uiPage - 1;
     const size = 10;
     const sort = 'createdAt,desc';
-
     const qs = new URLSearchParams({ page, size, sort }).toString();
-    const res = await apiFetch(`/posts/list?${qs}`, { method: 'GET' });
 
-    // ApiResponse<Page<T>> or Page<T> 지원
+    const res = await apiFetch(`/posts/list?${qs}`, { method: 'GET' });
     const pageObj = res?.data ?? res;
     const items = pageObj?.content ?? [];
     const totalPages = pageObj?.totalPages ?? 1;
@@ -98,6 +91,5 @@ async function loadPosts() {
   }
 }
 
-// ===== 이벤트 =====
-window.addEventListener('popstate', loadPosts); // 뒤/앞으로 가기 대응
+window.addEventListener('popstate', loadPosts);
 document.addEventListener('DOMContentLoaded', loadPosts);

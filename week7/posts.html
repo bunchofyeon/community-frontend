@@ -6,13 +6,10 @@
   <title>게시글 목록 · Community</title>
   <link rel="stylesheet" href="styles/style.css" />
   <style>
-    /* 페이지 여백 */
     main.container { padding-top: 80px; padding-bottom: 60px; }
-
     .page-head { margin-bottom: 24px; display:flex; justify-content:space-between; align-items:center; }
     .page-title { margin:0; }
 
-    /* 목록 테이블 */
     .post-table {
       background: var(--surface);
       border: 1px solid var(--line);
@@ -20,9 +17,10 @@
       overflow: hidden;
       box-shadow: var(--shadow-sm);
     }
+    /* 조회수 컬럼 추가 (마지막 0.6fr) */
     .post-row {
       display: grid;
-      grid-template-columns: 3fr 1.5fr 1fr 1fr;
+      grid-template-columns: 3fr 1.5fr 1fr 1fr 0.6fr;
       align-items: center;
       padding: 14px 20px;
       border-top: 1px solid var(--line);
@@ -30,34 +28,29 @@
     }
     .post-row:first-child { border-top: none; }
     .post-row:hover { background: color-mix(in oklab, var(--bg) 85%, transparent); }
-    .post-row--head {
-      background: color-mix(in oklab, var(--bg) 70%, transparent);
-      font-weight: 700; color: var(--muted);
-    }
+    .post-row--head { background: color-mix(in oklab, var(--bg) 70%, transparent); font-weight:700; color:var(--muted); }
+
     .col.title a { color: var(--text); text-decoration: none; font-weight: 600; }
     .col.title a:hover { text-decoration: underline; }
     .empty { padding: 28px; text-align: center; color: var(--muted); }
 
-    /* 페이징 */
     .pagination {
-      display:flex; gap:8px; justify-content:center; align-items:center;
-      margin-top: 16px;
+      display:flex; gap:8px; justify-content:center; align-items:center; margin-top: 16px;
     }
     .page-btn {
       display:inline-flex; align-items:center; justify-content:center;
       min-width: 36px; height: 36px; padding: 0 10px;
       border: 1px solid var(--line); border-radius: 8px;
-      text-decoration:none; color: var(--text);
-      background: #fff;
+      text-decoration:none; color: var(--text); background: #fff;
     }
     .page-btn:hover { background: color-mix(in oklab, var(--bg) 85%, transparent); }
-    .page-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); pointer-events:none; }
+    .page-btn.active { background: var(--primary); color:#fff; border-color: var(--primary); pointer-events:none; }
     .page-btn.disabled { color: var(--muted); border-color: var(--line); pointer-events:none; }
 
     @media (max-width: 720px) {
       .post-row { grid-template-columns: 2fr 1fr; row-gap: 4px; font-size: 14px; }
       .post-row--head { display: none; }
-      .col.date, .col.update { display:none; }
+      .col.date, .col.update, .col.views { display:none; }
     }
   </style>
 </head>
@@ -65,7 +58,6 @@
   <script type="module">
     import { loadLayout } from './scripts/layout.js';
     import { renderHeader } from './scripts/common.js';
-    // 레이아웃 먼저 적용 → 그 다음 헤더 렌더
     loadLayout().then(() => renderHeader('posts'));
   </script>
 
@@ -74,24 +66,20 @@
   <main class="container">
     <div class="page-head">
       <h1 class="page-title">게시글 목록</h1>
-      <!-- 공개 페이지이지만, 클릭 시 post-create.html에서 requireAuth로 보호 -->
       <a class="btn" href="post-create.html" id="writeBtn">글쓰기</a>
     </div>
 
     <div class="post-table">
-      <!-- 테이블 헤더 -->
       <div class="post-row post-row--head">
         <div class="col title">제목</div>
         <div class="col author">작성자</div>
         <div class="col date">작성일</div>
         <div class="col update">수정일</div>
+        <div class="col views">조회수</div>
       </div>
-
-      <!-- 목록 영역 -->
       <div id="postList"></div>
     </div>
 
-    <!-- 페이징 영역 -->
     <nav id="pagination" class="pagination"></nav>
   </main>
 
