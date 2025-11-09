@@ -16,9 +16,11 @@
   </style>
 </head>
 <body>
+  <!-- 먼저 레이아웃 로드 → 헤더 렌더 -->
   <script type="module">
+    import { loadLayout } from './scripts/layout.js';
     import { renderHeader } from './scripts/common.js';
-    renderHeader();
+    loadLayout().then(() => renderHeader('posts'));
   </script>
 
   <!-- 공통 헤더 -->

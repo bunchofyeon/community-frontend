@@ -10,6 +10,12 @@
     .detail-title { margin:0 0 6px; }
     .meta { color: var(--muted); margin-bottom: 8px; }
 
+    .chips { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 16px; }
+    .chip { display:inline-flex; align-items:center; gap:8px; padding:6px 12px;
+      border:1px solid var(--line); border-radius:999px; background:#fff; font-size: var(--fz-sm); }
+    .chip .label { color: var(--muted); }
+    .chip .num { font-weight: 700; }
+
     .comment-box { margin-top: 24px; }
     .comment-list { margin-bottom: 20px; }
     .comment-item { display:flex; justify-content:space-between; align-items:flex-start; padding:12px; border-top:1px solid var(--line); }
@@ -18,7 +24,7 @@
     .comment-form { display:flex; gap:8px; align-items:flex-start; margin-top:10px;}
     .comment-form .input { flex:1; height:44px; padding:10px 12px; }
 
-    .btn { display:inline-flex; align-items:center; justify-content:center; border-radius:10px; font-weight:600; height:40px; padding:0 18px; border:1px solid transparent; cursor:pointer; transition:filter .15s, box-shadow .15s; }
+    .btn { display:inline-flex; align-items:center; justify-content:center; border-radius: 10px; font-weight:600; height:40px; padding:0 18px; border:1px solid transparent; cursor:pointer; transition: filter .15s, box-shadow .15s; }
     .btn.danger { background: var(--accent); color:#111; border-color: rgba(0,0,0,.08); }
     .btn.danger:hover { filter: brightness(0.98); box-shadow: 0 6px 18px rgba(254,209,54,.35); }
     .btn.ghost, .btn.xs.edit { background:#fff; color:#111; border:1px solid var(--line); }
@@ -27,12 +33,15 @@
 
     .comment-form .btn { background: var(--accent,#fed136); color:#111; border:1px solid rgba(0,0,0,.08); }
     .comment-form .btn:hover { filter:brightness(0.98); box-shadow:0 6px 18px rgba(254,209,54,.35); }
+
+    .focus-highlight { outline:2px solid #fed136; background: rgba(254,209,54,.12); transition: background .6s ease; }
   </style>
 </head>
 <body>
   <script type="module">
-   import { renderHeader } from './scripts/common.js';
-   renderHeader();
+    import { loadLayout } from './scripts/layout.js';
+    import { renderHeader } from './scripts/common.js';
+    loadLayout().then(() => renderHeader());
   </script>
 
   <div id="app-header"></div>
@@ -43,6 +52,8 @@
     <div class="comment-box">
       <h3>댓글</h3>
       <div id="commentList" class="comment-list"></div>
+      <div id="commentsSentinel" style="height:1px;"></div>
+
       <form id="commentForm" class="comment-form">
         <input id="commentContent" class="input" placeholder="댓글 입력..." required />
         <button class="btn" type="submit">등록</button>

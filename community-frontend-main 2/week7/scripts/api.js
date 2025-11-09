@@ -1,4 +1,5 @@
-// scripts/api.js
+// const BASE_URL = 'http://localhost:8080';
+
 export async function apiFetch(path, options = {}) {
   const token = localStorage.getItem('token');
 
@@ -8,8 +9,9 @@ export async function apiFetch(path, options = {}) {
     ...options.headers,
   };
 
-  // ✅ '/api' 제거 — 프론트엔드가 백엔드로 바로 요청
-  const res = await fetch(`${path}`, { ...options, headers });
+  const res = await fetch(`/api${path}`, { ...options, headers });
+
+  // 바디는 딱 한 번만 읽기
   const data = await readBodyOnce(res);
 
   if (!res.ok) {
@@ -19,20 +21,15 @@ export async function apiFetch(path, options = {}) {
   return data;
 }
 
-// --- 응답 body 한 번만 읽기 ---
 async function readBodyOnce(res) {
+  // 204/205 는 바디 없음
   if (res.status === 204 || res.status === 205) return null;
 
   const ct = res.headers.get('content-type') || '';
   if (ct.includes('application/json')) {
-    try {
-      return await res.json();
-    } catch {
-      return null;
-    }
+    try { return await res.json(); } catch { return null; }
   }
-
-  try {
+  try { 
     const text = await res.text();
     return text || null;
   } catch {
@@ -40,8 +37,8 @@ async function readBodyOnce(res) {
   }
 }
 
-// --- 에러 메시지 정리 ---
 function formatError(res, data) {
+  // 서버가 { message: "..."} 형태로 줄 때 우선 사용
   if (data && typeof data === 'object' && data.message) return data.message;
   if (typeof data === 'string' && data.trim().length) return data;
   return `${res.status} ${res.statusText}`;

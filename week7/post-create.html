@@ -8,11 +8,9 @@
 </head>
 <body>
   <script type="module">
-  import { loadLayout } from './scripts/layout.js';
-  import { renderHeader } from './scripts/common.js';
-  // 레이아웃 먼저 적용 → 그 다음 헤더 렌더
-  loadLayout().then(() => renderHeader()); 
-</script>
+    import { renderHeader } from './scripts/common.js';
+    renderHeader();
+  </script>
   <!-- 공통 헤더 -->
   <div id="app-header"></div>
 

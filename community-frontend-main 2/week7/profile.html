@@ -8,10 +8,11 @@
 </head>
 <body>
   <script type="module">
-    import { renderHeader } from './scripts/common.js';
-    renderHeader();
-  </script>
-
+  import { loadLayout } from './scripts/layout.js';
+  import { renderHeader } from './scripts/common.js';
+  // 레이아웃 먼저 적용 → 그 다음 헤더 렌더
+  loadLayout().then(() => renderHeader()); 
+</script>
   <div id="app-header"></div>
 
   <main class="container page-padding">

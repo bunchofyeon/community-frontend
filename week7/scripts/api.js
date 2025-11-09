@@ -8,13 +8,13 @@ export async function apiFetch(path, options = {}) {
     ...options.headers,
   };
 
-  const res = await fetch(`/api${path}`, { ...options, headers });
+  // 핵심: '/api' 붙이지 말고 그대로 보냄
+  const res = await fetch(path, { ...options, headers });
   const data = await readBodyOnce(res);
 
   if (!res.ok) {
     throw new Error(formatError(res, data));
   }
-
   return data;
 }
 
@@ -25,13 +25,10 @@ async function readBodyOnce(res) {
   if (ct.includes('application/json')) {
     try { return await res.json(); } catch { return null; }
   }
-
   try {
     const text = await res.text();
     return text || null;
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
 function formatError(res, data) {

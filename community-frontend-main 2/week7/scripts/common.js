@@ -1,4 +1,6 @@
-// scripts/common.js
+// week5/scripts/common.js
+
+// 현재 파일명으로 active 추론
 function inferActiveKey(explicit = '') {
   if (explicit) return explicit;
   const path = (new URL(location.href)).pathname.split('/').pop() || '';
@@ -13,6 +15,7 @@ function inferActiveKey(explicit = '') {
   return '';
 }
 
+// 헤더 렌더
 export function renderHeader(active = '') {
   const header = document.querySelector('#app-header');
   if (!header) return;
@@ -22,6 +25,9 @@ export function renderHeader(active = '') {
   const acls = (k) => (k === resolvedActive ? 'active' : '');
   const aria = (k) => (k === resolvedActive ? 'aria-current="page"' : '');
 
+  // 항상: 게시글 목록
+  // 로그인: 글쓰기/마이페이지/로그아웃
+  // 비로그인: 로그인/회원가입
   header.innerHTML = `
     <div class="header">
       <a class="brand" href="posts.html" aria-label="홈">piney community</a>
@@ -43,6 +49,21 @@ export function renderHeader(active = '') {
     </div>
   `;
 
+  // 로그인 시에만 사이드바 노출 + active 처리
+  const sidebar = document.querySelector('.sidebar[data-guard="auth"]');
+  if (sidebar) {
+    if (loggedIn) {
+      sidebar.hidden = false;
+      const key = inferActiveKey(active);
+      sidebar.querySelectorAll('a').forEach(a => {
+        a.classList.toggle('active', a.dataset.key === key);
+      });
+    } else {
+      sidebar.hidden = true;
+    }
+  }
+
+  // 로그아웃
   header.querySelector('#logoutBtn')?.addEventListener('click', (e) => {
     e.preventDefault();
     localStorage.removeItem('token');
@@ -50,6 +71,7 @@ export function renderHeader(active = '') {
   });
 }
 
+// 인증이 필요한 페이지에서만 호출하세요(목록/상세/댓글보기에는 호출 X)
 export function requireAuth() {
   if (!localStorage.getItem('token')) {
     alert('로그인이 필요합니다.');

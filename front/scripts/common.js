@@ -1,4 +1,6 @@
 // scripts/common.js
+
+// 현재 파일명으로 active 추론
 function inferActiveKey(explicit = '') {
   if (explicit) return explicit;
   const path = (new URL(location.href)).pathname.split('/').pop() || '';
@@ -13,36 +15,35 @@ function inferActiveKey(explicit = '') {
   return '';
 }
 
+// 헤더 렌더 (layout.js가 헤더를 주입한 뒤 호출)
 export function renderHeader(active = '') {
   const header = document.querySelector('#app-header');
   if (!header) return;
 
   const loggedIn = !!localStorage.getItem('token');
   const resolvedActive = inferActiveKey(active);
-  const acls = (k) => (k === resolvedActive ? 'active' : '');
-  const aria = (k) => (k === resolvedActive ? 'aria-current="page"' : '');
 
-  header.innerHTML = `
-    <div class="header">
-      <a class="brand" href="posts.html" aria-label="홈">piney community</a>
-      <nav>
-        <a href="posts.html" class="${acls('posts')}" ${aria('posts')}>게시글 목록</a>
-        ${
-          loggedIn
-            ? `
-              <a href="post-create.html" class="${acls('create')}" ${aria('create')}>글쓰기</a>
-              <a href="my-page.html" class="${acls('mypage')}" ${aria('mypage')}>마이페이지</a>
-              <a href="#" id="logoutBtn">로그아웃</a>
-            `
-            : `
-              <a href="login.html" class="${acls('login')}" ${aria('login')}>로그인</a>
-              <a href="signup.html" class="${acls('signup')}" ${aria('signup')}>회원가입</a>
-            `
-        }
-      </nav>
-    </div>
-  `;
+  // nav a[data-key]에 active 적용
+  header.querySelectorAll('nav a[data-key]').forEach(a => {
+    const key = a.getAttribute('data-key');
+    const isActive = key === resolvedActive || (key === 'posts' && resolvedActive === 'posts');
+    a.classList.toggle('active', isActive);
+    if (isActive) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+  });
 
+  // 사이드바가 있다면(다른 페이지 공유 레이아웃 대비) 안전 가드
+  const sidebar = document.querySelector('.sidebar[data-guard="auth"]');
+  if (sidebar) {
+    sidebar.hidden = !loggedIn;
+    if (loggedIn) {
+      const key = inferActiveKey(active);
+      sidebar.querySelectorAll('a').forEach(a => {
+        a.classList.toggle('active', a.dataset.key === key);
+      });
+    }
+  }
+
+  // 로그아웃(헤더에 있을 때만)
   header.querySelector('#logoutBtn')?.addEventListener('click', (e) => {
     e.preventDefault();
     localStorage.removeItem('token');
@@ -50,6 +51,7 @@ export function renderHeader(active = '') {
   });
 }
 
+// 인증이 필요한 페이지에서만 호출하세요
 export function requireAuth() {
   if (!localStorage.getItem('token')) {
     alert('로그인이 필요합니다.');

@@ -56,8 +56,9 @@
 </head>
 <body>
   <script type="module">
+    import { loadLayout } from './scripts/layout.js';
     import { renderHeader } from './scripts/common.js';
-    renderHeader();
+    loadLayout().then(() => renderHeader('posts'));
   </script>
 
   <div id="app-header"></div>
