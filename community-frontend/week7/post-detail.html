@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>게시글 상세 · Community</title>
+  <link rel="stylesheet" href="styles/style.css" />
+  <style>
+    main.container { padding-top: 80px; padding-bottom: 60px; }
+    #postDetail.card { margin-bottom: 40px; }
+    .detail-title { margin:0 0 6px; }
+    .meta { color: var(--muted); margin-bottom: 8px; }
+    .comment-box { margin-top: 24px; }
+    .comment-list { margin-bottom: 20px; }
+    .comment-item { display:flex; justify-content:space-between; align-items:flex-start; padding:12px; border-top:1px solid var(--line); }
+    .comment-form { display:flex; gap:8px; align-items:flex-start; margin-top:10px; }
+    .comment-form .input { flex:1; height:44px; padding:10px 12px; }
+  </style>
+</head>
+<body>
+  <div id="app-header"></div>
+
+  <main class="container">
+    <div id="postDetail" class="card"></div>
+
+    <div class="comment-box">
+      <h3>댓글</h3>
+      <div id="commentList" class="comment-list"></div>
+      <div id="commentsSentinel" style="height:1px;"></div>
+
+      <form id="commentForm" class="comment-form">
+        <input id="commentContent" class="input" placeholder="댓글 입력..." required />
+        <button class="btn" type="submit">등록</button>
+      </form>
+    </div>
+  </main>
+
+  <!-- 헤더 부트스트랩 → 상세 스크립트 (CSP: 인라인 금지) -->
+  <script type="module" src="scripts/boot.js"></script>
+  <script type="module" src="scripts/postDetail.js"></script>
+</body>
+</html>
