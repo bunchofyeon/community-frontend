@@ -10,13 +10,18 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8080';
 
-// ✅ 루트("/") 접속 시 로그인 페이지로 리다이렉트
 app.get('/', (req, res) => {
   res.redirect('/login.html');
 });
 
 // 보안, 압축, 로그 미들웨어
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: false,   // CSP 끔 (개발 중)
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+  })
+);
 app.use(compression());
 app.use(morgan('dev'));
 

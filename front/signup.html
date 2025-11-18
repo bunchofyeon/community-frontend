@@ -1,8 +1,10 @@
+<!-- signup.html -->
 <!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
   <title>회원가입</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://*.amazonaws.com https://*.s3.ap-northeast-2.amazonaws.com https://placehold.co data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:* https://*;">
   <link rel="stylesheet" href="styles/style.css" />
 </head>
 <body>
@@ -16,12 +18,24 @@
   <main class="container">
     <div class="card" style="max-width:420px; margin:40px auto;">
       <h2>회원가입</h2>
-      <form id="signupForm">
+      <form id="signupForm" enctype="multipart/form-data">
         <input id="email" class="input" type="email" placeholder="이메일" required />
         <input id="nickname" class="input" type="text" placeholder="닉네임" required />
         <input id="password" class="input" type="password" placeholder="비밀번호" required />
         <input id="passwordCheck" class="input" type="password" placeholder="비밀번호 확인" required />
-        <button class="btn" type="submit">회원가입</button>
+
+        <div class="field" style="margin-top:12px;">
+          <label for="profileImage" class="form-label">프로필 이미지 (선택)</label>
+          <input
+            id="profileImage"
+            class="input"
+            type="file"
+            accept="image/*"
+          />
+          <small class="form-hint">jpg, png 등의 이미지를 선택할 수 있습니다.</small>
+        </div>
+
+        <button class="btn" type="submit" style="margin-top:16px;">회원가입</button>
         <p class="hint">
           이미 계정이 있나요? <a href="login.html">로그인 하러 가기</a>
         </p>

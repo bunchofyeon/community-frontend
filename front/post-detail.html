@@ -1,14 +1,28 @@
+<!-- post-detail.html -->
 <!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
   <title>게시글 상세 · Community</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://*.amazonaws.com https://*.s3.ap-northeast-2.amazonaws.com https://placehold.co data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:* https://*;">
   <link rel="stylesheet" href="styles/style.css" />
   <style>
     main.container { padding-top: 80px; padding-bottom: 60px; }
     #postDetail.card { margin-bottom: 40px; }
     .detail-title { margin:0 0 6px; }
     .meta { color: var(--muted); margin-bottom: 8px; }
+
+    .attachment-section { margin-bottom: 24px; }
+    .attachment-list { list-style:none; padding:0; margin:8px 0 0; }
+    .attachment-item {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:6px 0;
+      border-top:1px solid var(--line);
+      font-size:14px;
+    }
+
     .comment-box { margin-top: 24px; }
     .comment-list { margin-bottom: 20px; }
     .comment-item { display:flex; justify-content:space-between; align-items:flex-start; padding:12px; border-top:1px solid var(--line); }
@@ -22,6 +36,13 @@
   <main class="container">
     <div id="postDetail" class="card"></div>
 
+    <section id="attachmentSection" class="card attachment-section" hidden>
+      <div class="card-body">
+        <h3 class="h5">첨부 파일</h3>
+        <ul id="attachmentList" class="attachment-list"></ul>
+      </div>
+    </section>
+
     <div class="comment-box">
       <h3>댓글</h3>
       <div id="commentList" class="comment-list"></div>
@@ -34,7 +55,6 @@
     </div>
   </main>
 
-  <!-- 헤더 부트스트랩 → 상세 스크립트 (CSP: 인라인 금지) -->
   <script type="module" src="scripts/boot.js"></script>
   <script type="module" src="scripts/postDetail.js"></script>
 </body>

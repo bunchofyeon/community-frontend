@@ -1,9 +1,11 @@
+<!-- post-edit.html -->
 <!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
   <title>게시글 수정 · Community</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://*.amazonaws.com https://*.s3.ap-northeast-2.amazonaws.com https://placehold.co data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:* https://*;">
   <link rel="stylesheet" href="styles/style.css" />
   <style>
     main.container { padding-top: 100px; padding-bottom: 80px; }
@@ -13,17 +15,29 @@
     .mb-16 { margin-bottom: 36px; }
 
     .card-body { padding: 32px; }
+
+    .file-row {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:6px 0;
+      border-top:1px solid var(--line);
+      font-size:14px;
+    }
+    .file-row button {
+      font-size:12px;
+      padding:2px 6px;
+    }
+    .file-list { margin-top:8px; }
   </style>
 </head>
 <body>
-  <!-- 먼저 레이아웃 로드 → 헤더 렌더 -->
   <script type="module">
     import { loadLayout } from './scripts/layout.js';
     import { renderHeader } from './scripts/common.js';
     loadLayout().then(() => renderHeader('posts'));
   </script>
 
-  <!-- 공통 헤더 -->
   <div id="app-header"></div>
 
   <main class="container page-padding">
@@ -35,7 +49,6 @@
           <form id="editForm" novalidate>
             <div class="mb-12">
               <label class="form-label" for="title">제목</label>
-              <!-- 입력단에서도 26자 제한 -->
               <input
                 id="title"
                 class="form-control"
@@ -58,6 +71,23 @@
               ></textarea>
             </div>
 
+            <div class="mb-16">
+              <label class="form-label">기존 첨부 파일</label>
+              <div id="existingFiles" class="file-list"></div>
+              <div class="form-hint">삭제할 파일만 X 버튼을 눌러 주세요.</div>
+            </div>
+
+            <div class="mb-16">
+              <label class="form-label" for="newPostFiles">파일 추가</label>
+              <input
+                id="newPostFiles"
+                type="file"
+                multiple
+                class="form-control"
+              />
+              <div id="newFilePreview" class="file-list"></div>
+            </div>
+
             <div class="actions">
               <a class="btn btn-light" id="cancelBtn" href="#">취소</a>
               <button class="btn btn-accent" type="submit" id="saveBtn">수정 완료</button>
@@ -69,7 +99,6 @@
     </div>
   </main>
 
-  <!-- 기능 스크립트 -->
   <script type="module" src="scripts/postEdit.js"></script>
 </body>
 </html>

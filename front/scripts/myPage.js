@@ -1,8 +1,7 @@
 // scripts/mypage.js
-import { renderHeader, requireAuth } from './common.js';
+import { requireAuth } from './common.js';
 import { apiFetch } from './api.js';
 
-renderHeader('mypage');
 requireAuth();
 
 /** ========= 백엔드 엔드포인트 매핑 ========= */
@@ -28,34 +27,38 @@ const dom = {
   withdrawBtn: $('#withdrawBtn'),
 };
 
-/** ========= 유틸 ========= */
 function fmtDate(iso) {
   if (!iso) return '';
   const d = new Date(iso);
   return d.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
 }
 
-// JWT Base64URL 디코드 → JSON
-function decodeJwtPayload() {
+async function safeFetch(url, init) {
+  return await apiFetch(url, init);
+}
+
+/** ========= 요약 정보 ========= */
+async function loadSummary() {
   try {
-    const token = localStorage.getItem('token');
-    if (!token) return null;
-    const [, payload] = token.split('.');
-    if (!payload) return null;
-    const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
-    return JSON.parse(decodeURIComponent(escape(json)));
-  } catch {
-    return null;
+    const res = await safeFetch(API.me, { method: 'GET' });
+    const data = res?.data ?? res;
+
+    if (data?.email && dom.email) dom.email.textContent = data.email;
+    if (data?.nickname && dom.nickname) dom.nickname.textContent = data.nickname;
+
+    if (dom.avatar) {
+      dom.avatar.src = data?.profileImageUrl || './assets/img/comong.png';
+    }
+  } catch (e) {
+    console.error('[mypage] me load error', e);
+    if (dom.avatar) {
+      dom.avatar.src = './assets/img/comong.png';
+    }
   }
 }
 
-async function safeFetch(url, init) {
-  try {
-    return await apiFetch(url, init);
-  } catch (e) {
-    throw e; // 호출부에서 처리
-  }
-}
+/** ========= 내 글 ========= */
+let postsUiPage = 1;
 
 function makePager(el, uiPage, totalPages, onMove) {
   if (!el) return;
@@ -78,35 +81,6 @@ function makePager(el, uiPage, totalPages, onMove) {
   el.appendChild(btn('›', Math.min(totalPages, uiPage + 1), { disabled: uiPage === totalPages }));
 }
 
-async function loadSummary() {
-  // 1) /users/me
-  try {
-    const res = await safeFetch(API.me, { method: 'GET' });
-    const data = res?.data ?? res;
-    if (data?.email && dom.email) dom.email.textContent = data.email;
-    if (data?.nickname && dom.nickname) dom.nickname.textContent = data.nickname;
-    if (data?.profileImageUrl && dom.avatar) dom.avatar.src = data.profileImageUrl;
-    return;
-  } catch {}
-
-  // 2) JWT payload에서 email 추출
-  const payload = decodeJwtPayload();
-  const email = payload?.email || payload?.sub || payload?.username;
-  if (email && dom.email) dom.email.textContent = email;
-
-  // 3) 닉네임 추정
-  try {
-    const page0 = await loadMyPosts(true);
-    if (page0 && page0.items?.length) {
-      const first = page0.items[0];
-      const nick = first?.authorNickname || first?.nickname || first?.writerNickname;
-      if (nick && dom.nickname && !dom.nickname.textContent) dom.nickname.textContent = nick;
-    }
-  } catch {}
-}
-
-/** ========= 내 글 ========= */
-let postsUiPage = 1;
 async function loadMyPosts(previewOnly = false) {
   const page = postsUiPage - 1;
   const size = 5;
@@ -147,7 +121,9 @@ async function loadMyPosts(previewOnly = false) {
   }
 }
 
-/** ========= postId 깊이 탐색 ========= */
+/** ========= 내 댓글 ========= */
+let commentsUiPage = 1;
+
 function resolvePostIdDeep(obj, depth = 0, seen = new Set()) {
   if (!obj || typeof obj !== 'object') return null;
   if (seen.has(obj) || depth > 5) return null;
@@ -174,8 +150,6 @@ function resolvePostIdDeep(obj, depth = 0, seen = new Set()) {
   return null;
 }
 
-/** ========= 내 댓글 ========= */
-let commentsUiPage = 1;
 async function loadMyComments(previewOnly = false) {
   const page = commentsUiPage - 1;
   const size = 5;
@@ -195,7 +169,6 @@ async function loadMyComments(previewOnly = false) {
       if (dom.commentsWrap) dom.commentsWrap.innerHTML = `<div class="empty">작성한 댓글이 없습니다.</div>`;
     } else if (dom.commentsWrap) {
       dom.commentsWrap.innerHTML = items.map((c) => {
-        // 백엔드에서 postId 내려오니까 우선 사용, 없으면 깊이 탐색
         const pidAny =
           c.postId ?? c.post_id ?? c.postsId ?? c.postID ??
           (c.post && (c.post.id ?? c.post.postId)) ??
@@ -219,18 +192,6 @@ async function loadMyComments(previewOnly = false) {
           </div>
         `;
       }).join('');
-
-      // 디버그 로그(필요시 확인)
-      console.log('[mypage] comments sample raw', items.slice(0,3));
-      console.log('[mypage] resolved pid list',
-        items.slice(0,10).map(x => {
-          const pidAny =
-            x.postId ?? x.post_id ?? x.postsId ?? x.postID ??
-            (x.post && (x.post.id ?? x.post.postId)) ??
-            resolvePostIdDeep(x);
-          return pidAny ?? null;
-        })
-      );
     }
 
     makePager(dom.commentsPager, commentsUiPage, totalPages, (to) => {
@@ -257,21 +218,15 @@ dom.withdrawBtn?.addEventListener('click', async () => {
     localStorage.removeItem('token');
     alert('탈퇴 완료');
     location.href = 'signup.html';
-    return;
-  } catch (e) {}
-
-  alert(
-    '현재 서버는 /users/me 삭제 엔드포인트가 없어 탈퇴를 직접 호출할 수 없어요.\n' +
-    '백엔드에 DELETE /users/me 를 추가해 주면, 버튼이 바로 동작합니다.\n' +
-    '(또는 프론트가 userId를 안전하게 알 수 있게 JWT에 id 클레임을 넣어주세요)'
-  );
+  } catch (e) {
+    alert('탈퇴 실패: ' + (e?.message || '알 수 없는 오류'));
+  }
 });
 
 /** ========= 부트스트랩 ========= */
 document.addEventListener('DOMContentLoaded', async () => {
-  // 아바타 폴백(이미지 없을 때)
   dom.avatar?.addEventListener('error', () => {
-    dom.avatar.src = 'https://placehold.co/88x88?text=No+Img';
+    dom.avatar.src = './assets/img/comong.png';
   });
 
   await loadSummary();

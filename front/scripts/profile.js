@@ -1,4 +1,3 @@
-// scripts/profile.js
 import { renderHeader, requireAuth } from './common.js';
 import { apiFetch } from './api.js';
 
@@ -7,16 +6,202 @@ requireAuth();
 
 const $ = (sel) => document.querySelector(sel);
 
-const $form       = $('#profileForm');
-const $nickname   = $('#nickname');
-const $current    = $('#currentPassword');
-const $newPwd     = $('#newPassword');
-const $newPwdCk   = $('#newPasswordCheck');
-const $deleteBtn  = $('#deleteBtn');
+const $form      = $('#profileForm');
+const $nickname  = $('#nickname');
+const $current   = $('#currentPassword');
+const $newPwd    = $('#newPassword');
+const $newPwdCk  = $('#newPasswordCheck');
+const $deleteBtn = $('#deleteBtn');
 
-let ME = null; // /users/me 결과 캐시(백엔드가 이메일 등 요구시 호환용)
+// 프로필 이미지 관련
+const $profilePreview       = $('#profileImagePreview');
+const $profileFileInput     = $('#profileImageFile');
+const $profileDeleteButton  = $('#profileImageDeleteBtn');
+const $profileImageSaveBtn  = $('#profileImageSaveBtn');
 
-// ===== 회원 탈퇴 =====
+const API = {
+  me: '/users/me',
+  checkNickname: (nickname) =>
+    `/users/checkNickname?nickname=${encodeURIComponent(nickname)}`,
+  updateNickname: '/users/updateNickname',
+  updatePassword: '/users/updatePassword',
+  profileImage: '/profile-image',
+};
+
+let ME = null;
+let lastCheckedNickname = '';
+let selectedProfileFile = null; // 아직 서버에 안 보낸 새 파일
+let pendingProfileDelete = false;
+
+function defaultProfileSrc() {
+  return './assets/img/comong.png';
+}
+
+function attachPreviewFallback(imgEl) {
+  if (!imgEl) return;
+  imgEl.addEventListener(
+    'error',
+    () => {
+      imgEl.src = 'https://placehold.co/88x88?text=IMG';
+    },
+    { once: true },
+  );
+}
+
+async function loadMeIntoForm() {
+  try {
+    const res = await apiFetch(API.me, { method: 'GET' });
+    const me = res?.data ?? res;
+    ME = me;
+
+    if (me?.nickname && $nickname) {
+      $nickname.value = me.nickname;
+    }
+
+    if ($profilePreview) {
+      attachPreviewFallback($profilePreview);
+
+      const url = me?.profileImageUrl || defaultProfileSrc();
+      $profilePreview.src = url
+        ? `${url}?t=${Date.now()}`
+        : defaultProfileSrc();
+    }
+  } catch (e) {
+    console.error('[profile] load me error', e);
+    if ($profilePreview) {
+      attachPreviewFallback($profilePreview);
+      $profilePreview.src = defaultProfileSrc();
+    }
+  }
+}
+
+// 닉네임 중복 체크
+async function checkNicknameUnique() {
+  const nickname = ($nickname?.value ?? '').trim();
+  if (!nickname) {
+    alert('닉네임을 입력하세요.');
+    $nickname?.focus();
+    return false;
+  }
+
+  if (ME && nickname === ME.nickname) {
+    lastCheckedNickname = nickname;
+    alert('현재 사용 중인 닉네임입니다.');
+    return true;
+  }
+
+  try {
+    await apiFetch(API.checkNickname(nickname), { method: 'GET' });
+    lastCheckedNickname = nickname;
+    alert('사용 가능한 닉네임입니다.');
+    return true;
+  } catch (err) {
+    alert(
+      '닉네임 중복: ' + (err?.message || '이미 사용 중인 닉네임입니다.'),
+    );
+    return false;
+  }
+}
+
+// 닉네임 중복 확인 버튼
+const $nickCheckBtn = $('#nicknameCheckBtn');
+$nickCheckBtn?.addEventListener('click', async (e) => {
+  e.preventDefault();
+  await checkNicknameUnique();
+});
+
+// 프로필 이미지 선택하면 먼저 프리뷰만 보여줌
+$profileFileInput?.addEventListener('change', (e) => {
+  const file = e.target.files?.[0] ?? null;
+  if (!file) {
+    selectedProfileFile = null;
+    return;
+  }
+
+  selectedProfileFile = file;
+  pendingProfileDelete = false;
+
+  const previewUrl = URL.createObjectURL(file); // blob: URL
+  if ($profilePreview) {
+    attachPreviewFallback($profilePreview);
+    $profilePreview.src = previewUrl;
+  }
+});
+
+// 프로필 이미지 삭제 버튼
+$profileDeleteButton?.addEventListener('click', (e) => {
+  e.preventDefault();
+  if (!confirm('프로필 이미지를 삭제하시겠습니까?')) return;
+
+  pendingProfileDelete = true;
+  selectedProfileFile = null;
+  if ($profileFileInput) {
+    $profileFileInput.value = '';
+  }
+  if ($profilePreview) {
+    attachPreviewFallback($profilePreview);
+    $profilePreview.src = defaultProfileSrc();
+  }
+});
+
+// 프로필 이미지 변경/삭제 서버 반영
+async function applyProfileImageChanges() {
+  // 삭제만 하는 경우
+  if (pendingProfileDelete) {
+    await apiFetch(API.profileImage, { method: 'DELETE' });
+    return { profileImageUrl: null };
+  }
+
+  // 새 파일 선택한 경우
+  if (selectedProfileFile) {
+    const fd = new FormData();
+    fd.append('file', selectedProfileFile);
+
+    const res = await apiFetch(API.profileImage, {
+      method: 'POST',
+      body: fd,
+    });
+    return res?.data ?? res;
+  }
+
+  // 변경 사항 없음
+  return {};
+}
+
+// 이미지 저장 버튼 (이미지 단독 저장)
+$profileImageSaveBtn?.addEventListener('click', async (e) => {
+  e.preventDefault();
+
+  if (!selectedProfileFile && !pendingProfileDelete) {
+    alert('변경된 이미지가 없습니다.');
+    return;
+  }
+
+  try {
+    const imgRes = await applyProfileImageChanges();
+
+    // 서버 URL 기준으로 다시 로드
+    if (imgRes && imgRes.profileImageUrl && $profilePreview) {
+      $profilePreview.src = `${imgRes.profileImageUrl}?t=${Date.now()}`;
+    } else if (pendingProfileDelete && $profilePreview) {
+      $profilePreview.src = defaultProfileSrc();
+    }
+
+    // 상태 초기화
+    pendingProfileDelete = false;
+    selectedProfileFile = null;
+    if ($profileFileInput) {
+      $profileFileInput.value = '';
+    }
+
+    alert('프로필 이미지가 저장되었습니다.');
+  } catch (err) {
+    console.error('[profile] image save error', err);
+    alert('이미지 저장 실패: ' + (err?.message ?? '알 수 없는 에러'));
+  }
+});
+
+// 회원 탈퇴
 $deleteBtn?.addEventListener('click', async () => {
   if (!confirm('정말 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
   try {
@@ -29,33 +214,38 @@ $deleteBtn?.addEventListener('click', async () => {
   }
 });
 
-// ===== 프로필 수정 =====
+// 프로필 폼 submit (닉네임 + 비밀번호만)
 $form?.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  const nickname          = ($nickname?.value ?? '').trim();
-  const currentPassword   = ($current?.value ?? '').trim();
-  const newPassword       = ($newPwd?.value ?? '').trim();
-  const newPasswordCheck  = ($newPwdCk?.value ?? '').trim();
+  const nickname         = ($nickname?.value ?? '').trim();
+  const currentPassword  = ($current?.value ?? '').trim();
+  const newPassword      = ($newPwd?.value ?? '').trim();
+  const newPasswordCheck = ($newPwdCk?.value ?? '').trim();
 
-  if (!currentPassword) {
+  const nicknameChanged = !!ME && nickname && nickname !== ME.nickname;
+  const passwordChanged = !!(newPassword || newPasswordCheck);
+
+  if (!nicknameChanged && !passwordChanged) {
+    alert('변경할 내용이 없습니다. (이미지는 상단의 "이미지 저장" 버튼으로 저장하세요)');
+    return;
+  }
+
+  // 닉네임/비밀번호 바꾸면 현재 비밀번호 필수
+  if ((nicknameChanged || passwordChanged) && !currentPassword) {
     alert('현재 비밀번호를 입력하세요.');
     $current?.focus();
     return;
   }
 
-  // 기본 페이로드(닉네임만 수정 가능)
-  const bodyBase = {
-    nickname,
-    currentPassword,
-  };
+  if (nicknameChanged) {
+    if (lastCheckedNickname !== nickname) {
+      const ok = await checkNicknameUnique();
+      if (!ok) return;
+    }
+  }
 
-  // 백엔드가 이메일을 여전히 요구한다면(과거 DTO 호환용)
-  if (ME?.email) bodyBase.email = ME.email;
-
-  // 새 비번 입력한 경우에만 포함
-  const willChangePassword = newPassword.length > 0 || newPasswordCheck.length > 0;
-  if (willChangePassword) {
+  if (passwordChanged) {
     if (newPassword.length < 4) {
       alert('새 비밀번호는 4자 이상이어야 합니다.');
       $newPwd?.focus();
@@ -68,71 +258,34 @@ $form?.addEventListener('submit', async (e) => {
     }
   }
 
-  // 1차 시도: 선택형 DTO 기준(비번 비우면 미포함)
-  let body = { ...bodyBase };
-  if (willChangePassword) {
-    body.password = newPassword;
-    body.passwordCheck = newPasswordCheck;
-  }
-
   try {
-    await apiFetch('/users/update', {
-      method: 'PATCH',
-      body: JSON.stringify(body),
-    });
-    afterSuccess();
-  } catch (err) {
-    // ⛑️ 호환용 Fallback:
-    // 백엔드가 여전히 password/passwordCheck를 @NotBlank로 강제하면
-    // "이메일을 입력해주세요." / "변경할 비밀번호를 입력해주세요." 류 메시지가 올 수 있음.
-    const msg = String(err?.message || '');
-    const looksLikeRequiresPw =
-      /비밀번호를 입력|password.*blank|passwordCheck.*blank|이메일을 입력/i.test(msg);
-
-    if (!willChangePassword && looksLikeRequiresPw) {
-      // 다시 한 번 시도: 새 비번을 보내지 않으려던 케이스에서
-      // 서버가 강제할 때 현재 비번으로 양쪽 채워 재시도
-      try {
-        const retry = {
-          ...bodyBase,
-          password: currentPassword,
-          passwordCheck: currentPassword,
-        };
-        await apiFetch('/users/update', {
-          method: 'PATCH',
-          body: JSON.stringify(retry),
-        });
-        afterSuccess();
-        return;
-      } catch (e2) {
-        alert('수정 실패: ' + (e2?.message ?? '알 수 없는 에러'));
-        return;
-      }
+    // 1) 닉네임 변경
+    if (nicknameChanged) {
+      await apiFetch(API.updateNickname, {
+        method: 'PATCH',
+        body: JSON.stringify({ currentPassword, nickname }),
+      });
     }
 
+    // 2) 비밀번호 변경
+    if (passwordChanged) {
+      await apiFetch(API.updatePassword, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+          newPasswordCheck,
+        }),
+      });
+    }
+
+    alert('프로필 수정 완료!');
+    location.href = 'my-page.html';
+  } catch (err) {
+    console.error('[profile] update error', err);
     alert('수정 실패: ' + (err?.message ?? '알 수 없는 에러'));
   }
 });
 
-function afterSuccess() {
-  alert('프로필 수정 완료!');
-  // UX 1) 마이페이지로 이동
-  location.href = 'my-page.html';
-  // 만약 이 페이지에 머무르고 싶다면 아래처럼 새로고침/재로드:
-  // $current.value = $newPwd.value = $newPwdCk.value = '';
-  // loadMeIntoForm();
-}
-
-// ===== 내 정보 채우기 =====
-async function loadMeIntoForm() {
-  try {
-    const meRes = await apiFetch('/users/me'); // { message, data: {...} }
-    const me = meRes?.data ?? meRes;
-    ME = me;
-    if (me?.nickname && $nickname) $nickname.value = me.nickname;
-  } catch (e) {
-    console.error('[profile] load me error', e);
-  }
-}
-
+// DOM 준비 후 me 호출
 document.addEventListener('DOMContentLoaded', loadMeIntoForm);

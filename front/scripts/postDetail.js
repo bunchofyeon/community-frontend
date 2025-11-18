@@ -1,10 +1,8 @@
-// scripts/postDetail.js
 import { renderHeader } from './common.js';
-import { apiFetch } from './api.js';          // ✅ isLoggedIn import 제거
+import { apiFetch } from './api.js';
 
 renderHeader();
 
-// ✅ 로컬 유틸: 로그인 여부 (api.js 의존 제거)
 const isLoggedIn = () => !!localStorage.getItem('token');
 
 const postId = new URLSearchParams(location.search).get('id');
@@ -22,9 +20,59 @@ const esc = (s = '') =>
    .replaceAll("'", '&#39;');
 
 const isEdited = (c, u) => c && u && new Date(u).getTime() !== new Date(c).getTime();
+
+// ApiResponse 형식 { message, data } → data만 꺼내기
 const unwrap = (r) => (r && typeof r === 'object' && 'data' in r ? r.data : r);
 
-/* ========== 게시글 상세 ========== */
+function renderFilesSection(files) {
+  if (!Array.isArray(files) || !files.length) return '';
+
+  const items = files.map((f) => {
+    const url = f.fileUrl || f.url || f.downloadUrl;
+    if (!url) return '';
+    const name = f.originName || f.filename || '';
+    return `
+      <figure class="post-file-thumb" style="margin:0;">
+        <img
+          src="${url}"
+          alt="${esc(name || '첨부 이미지')}"
+          style="width:160px;height:160px;object-fit:cover;border-radius:12px;border:1px solid #e5e7eb;"
+        />
+      </figure>
+    `;
+  }).join('');
+
+  if (!items.trim()) return '';
+
+  return `
+    <div class="post-files-wrap" style="margin-top:16px;">
+      <div class="chips" style="margin-bottom:8px;">
+        <span class="chip">첨부 이미지</span>
+      </div>
+      <div class="post-files-grid" style="display:flex;gap:12px;flex-wrap:wrap;">
+        ${items}
+      </div>
+    </div>
+  `;
+}
+
+async function loadPostFiles() {
+  try {
+    const res = await apiFetch(`/posts/${postId}/files`, { method: 'GET' });
+    const list = unwrap(res);
+    const files = Array.isArray(list) ? list : [];
+    const html = renderFilesSection(files);
+    if (html && detailEl) {
+      // 본문 아래에 붙이기
+      detailEl.insertAdjacentHTML('beforeend', html);
+    }
+  } catch (e) {
+    // 파일 없거나 에러여도 글 자체는 보이게 그냥 무시
+    console.warn('[postDetail] 파일 목록 로드 실패', e);
+  }
+}
+
+// 게시글 상세
 async function loadPost() {
   if (!postId) {
     alert('잘못된 접근입니다. (id 누락)');
@@ -40,7 +88,6 @@ async function loadPost() {
       ? `${esc(p.nickname ?? p.authorNickname ?? '익명')} · ${fmtDT(p.updatedAt)} (수정됨)`
       : `${esc(p.nickname ?? p.authorNickname ?? '익명')} · ${fmtDT(p.createdAt)}`;
 
-    // 수정(노란색), 삭제(흰색)
     const controls = isLoggedIn() ? `
       <div class="actions" style="margin-top:12px;">
         <a href="post-edit.html?id=${p.id}" class="btn btn-accent">수정</a>
@@ -57,7 +104,9 @@ async function loadPost() {
       <h2 class="detail-title">${esc(p.title ?? '')}</h2>
       <div class="meta">${meta}</div>
       ${viewInfo}
-      <div class="detail-content">${esc(p.content ?? '').replaceAll('\n','<br />')}</div>
+      <div class="detail-content">
+        ${esc(p.content ?? '').replaceAll('\n','<br />')}
+      </div>
       ${controls}
     `;
 
@@ -73,6 +122,9 @@ async function loadPost() {
         }
       });
     }
+
+    // 글 로드 후 첨부파일 별도 호출
+    await loadPostFiles();
   } catch (err) {
     const msg = String(err?.message || '');
     if (msg.includes('[401]')) {
@@ -84,7 +136,7 @@ async function loadPost() {
   }
 }
 
-/* ========== 댓글 API (백엔드 라우트 매칭) ========== */
+// 댓글
 async function getComments() {
   const r = await apiFetch(
     `/posts/${postId}/comments/list?page=0&size=100&sort=createdAt,asc`,
@@ -112,9 +164,7 @@ async function deleteComment(id) {
   return await apiFetch(`/posts/${postId}/comments/${id}`, { method: 'DELETE' });
 }
 
-/* ========== 렌더링 ========== */
 function renderCommentRow(c) {
-  // 로그인 시 버튼 노출(최종 권한은 서버 검증)
   const showEdit = isLoggedIn();
   const showDelete = isLoggedIn();
 
@@ -161,10 +211,9 @@ async function loadComments() {
 
     commentListEl.querySelectorAll('.comment-item').forEach((itemEl) => {
       const id = itemEl.getAttribute('data-id');
-      const original = list.find(x => String(x.id) === String(id));
+      const original = list.find((x) => String(x.id) === String(id));
       if (!original) return;
 
-      // 수정
       itemEl.querySelector('.edit')?.addEventListener('click', () => {
         if (!isLoggedIn()) return alert('로그인이 필요합니다.');
         toEditMode(itemEl, original);
@@ -184,7 +233,6 @@ async function loadComments() {
         itemEl.querySelector('.cancel')?.addEventListener('click', () => loadComments());
       });
 
-      // 삭제
       itemEl.querySelector('.delete')?.addEventListener('click', async () => {
         if (!isLoggedIn()) return alert('로그인이 필요합니다.');
         if (!confirm('이 댓글을 삭제할까요?')) return;

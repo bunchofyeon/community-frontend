@@ -1,9 +1,11 @@
+<!-- my-page.html -->
 <!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
   <title>마이페이지 · Community</title>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://*.amazonaws.com https://*.s3.ap-northeast-2.amazonaws.com https://placehold.co data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:* https://*;">
   <link rel="stylesheet" href="styles/style.css" />
   <style>
     main.container { padding-top: 80px; padding-bottom: 60px; }
@@ -40,7 +42,6 @@
     <!-- 상단 요약 카드 -->
     <section class="card section" id="summaryCard">
       <div class="summary">
-        <!-- 상대경로로 했음,프론트 서버 종류와 상관없이 로드됨 -->
         <img id="avatar" class="avatar" src="./assets/img/comong.png" alt="프로필 이미지">
         <div>
           <p class="name" id="nickname">닉네임</p>
