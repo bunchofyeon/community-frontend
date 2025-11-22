@@ -9,31 +9,151 @@
   <link rel="stylesheet" href="styles/style.css" />
   <style>
     main.container { padding-top: 80px; padding-bottom: 60px; }
+
     .grid { display:grid; grid-template-columns: 1fr; }
-    @media (min-width: 960px){ .grid { grid-template-columns: 1fr 1fr; } }
+    @media (min-width: 960px){
+      .grid { grid-template-columns: 1fr 1fr; }
+    }
 
     /* 상단 요약 카드 */
-    .summary { display:flex; gap:16px; align-items:center; }
-    .summary .avatar { width:88px; height:88px; border-radius:50%; object-fit:cover; border:4px solid #fff; }
-    .summary .name { font-weight:800; font-size:20px; margin:0 0 4px; }
-    .summary .meta { color:var(--muted); font-size:var(--fz-sm); }
-    .stats { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
-    .stat { padding:6px 10px; border:1px solid var(--line); border-radius:999px; background:#fff; font-size:var(--fz-sm); }
+    .summary {
+      display:flex;
+      gap:16px;
+      align-items:center;
+    }
+    .summary .avatar {
+      width:88px;
+      height:88px;
+      border-radius:50%;
+      object-fit:cover;
+      border:4px solid #fff;
+    }
 
-    .card-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
-    .table-head, .row { display:grid; grid-template-columns: 3fr 1fr 1fr; gap:8px; padding:12px 0; }
-    .table-head { color:var(--muted); font-weight:700; border-bottom:1px solid var(--line); }
+    /* 닉네임 + 연필 아이콘 한 줄 */
+    .summary .name-row {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      margin:0 0 4px;
+    }
+    .summary .name-text {
+      font-weight:800;
+      font-size:20px;
+    }
+    .summary .meta {
+      color:var(--muted);
+      font-size:var(--fz-sm);
+      margin:0;
+    }
+
+    .stats {
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:8px;
+    }
+    .stat {
+      padding:6px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:#fff;
+      font-size:var(--fz-sm);
+    }
+
+    /* 아바타 클릭용 버튼 */
+    .summary .avatar-btn {
+      padding:0;
+      border:0;
+      background:none;
+      cursor:pointer;
+    }
+
+    /* 닉네임 수정 아이콘 버튼 */
+    .nickname-edit-btn {
+      width:28px;
+      height:28px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:#fff;
+      cursor:pointer;
+      padding:0;
+      transition:background .15s ease, border-color .15s ease, box-shadow .15s ease;
+    }
+    .nickname-edit-btn svg {
+      width:14px;
+      height:14px;
+      display:block;
+    }
+    .nickname-edit-btn:hover {
+      background:color-mix(in oklab, var(--bg) 80%, transparent);
+      border-color:color-mix(in oklab, var(--accent) 40%, var(--line));
+      box-shadow:0 2px 6px rgba(0,0,0,.08);
+    }
+
+    .card-head {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:10px;
+    }
+    .table-head,
+    .row {
+      display:grid;
+      grid-template-columns: 3fr 1fr 1fr;
+      gap:8px;
+      padding:12px 0;
+    }
+    .table-head {
+      color:var(--muted);
+      font-weight:700;
+      border-bottom:1px solid var(--line);
+    }
     .row + .row { border-top:1px solid var(--line); }
     .title a:hover { text-decoration:underline; }
-    .empty { padding:20px; text-align:center; color:var(--muted); }
+    .empty {
+      padding:20px;
+      text-align:center;
+      color:var(--muted);
+    }
 
-    .pagination { display:flex; gap:8px; justify-content:center; margin-top:12px; }
-    .page-btn { min-width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--line); border-radius:8px; background:#fff; }
-    .page-btn.active { background:var(--primary); color:#111; border-color:var(--primary); }
-    .page-btn.disabled { color:var(--muted); pointer-events:none; }
+    .pagination {
+      display:flex;
+      gap:8px;
+      justify-content:center;
+      margin-top:12px;
+    }
+    .page-btn {
+      min-width:36px;
+      height:36px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border:1px solid var(--line);
+      border-radius:8px;
+      background:#fff;
+    }
+    .page-btn.active {
+      background:var(--primary);
+      color:#111;
+      border-color:var(--primary);
+    }
+    .page-btn.disabled {
+      color:var(--muted);
+      pointer-events:none;
+    }
   </style>
 </head>
 <body>
+  <!-- 레이아웃 + 헤더 렌더링 -->
+  <script type="module">
+    import { loadLayout } from './scripts/layout.js';
+    import { renderHeader } from './scripts/common.js';
+    loadLayout().then(() => renderHeader('mypage'));
+  </script>
+
   <div id="app-header"></div>
 
   <main class="container">
@@ -42,17 +162,55 @@
     <!-- 상단 요약 카드 -->
     <section class="card section" id="summaryCard">
       <div class="summary">
-        <img id="avatar" class="avatar" src="./assets/img/comong.png" alt="프로필 이미지">
+        <!-- 아바타 클릭 → 프로필 이미지 변경 페이지 -->
+        <button
+          type="button"
+          id="avatarEditBtn"
+          class="avatar-btn"
+          aria-label="프로필 이미지 변경"
+        >
+          <img
+            id="avatar"
+            class="avatar"
+            src="./assets/img/comong.png"
+            alt="프로필 이미지"
+          >
+        </button>
+
         <div>
-          <p class="name" id="nickname">닉네임</p>
+          <!-- 닉네임 + 연필 아이콘 한 줄 -->
+          <div class="name-row">
+            <span id="nicknameText" class="name-text">닉네임</span>
+            <button
+              type="button"
+              id="nicknameEditBtn"
+              class="nickname-edit-btn"
+              aria-label="닉네임 수정"
+            >
+              <!-- 심플 연필 SVG 아이콘 -->
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <path
+                  d="M4 13.5V16h2.5L14 8.5l-2.5-2.5L4 13.5zm9.8-7.3c.2-.2.2-.5 0-.7L12.5 4c-.2-.2-.5-.2-.7 0l-1 1 2.5 2.5 1-1z"
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <!-- 이메일은 닉네임 아래 줄 -->
           <p class="meta" id="email">user@example.com</p>
+
           <div class="stats">
             <span class="stat">내 글 <b id="postCount">0</b></span>
             <span class="stat">내 댓글 <b id="commentCount">0</b></span>
           </div>
         </div>
+
         <div class="actions-col">
-          <a class="btn btn-light" href="profile.html">회원정보 수정</a>
+          <!-- 비밀번호 변경 페이지로 이동 -->
+          <button type="button" id="editPasswordBtn" class="btn btn-light">
+            비밀번호 변경
+          </button>
           <button id="withdrawBtn" class="btn btn-light">회원 탈퇴</button>
         </div>
       </div>
@@ -62,9 +220,13 @@
     <div class="grid g-24 section">
       <!-- 내가 쓴 글 -->
       <section class="card">
-        <div class="card-head"><h2 class="h4">내가 쓴 글</h2></div>
+        <div class="card-head">
+          <h2 class="h4">내가 쓴 글</h2>
+        </div>
         <div class="table-head">
-          <div>제목</div><div>작성일</div><div>수정일</div>
+          <div>제목</div>
+          <div>작성일</div>
+          <div>수정일</div>
         </div>
         <div id="myPosts"></div>
         <nav id="pgMyPosts" class="pagination"></nav>
@@ -72,9 +234,13 @@
 
       <!-- 내가 쓴 댓글 -->
       <section class="card">
-        <div class="card-head"><h2 class="h4">내가 쓴 댓글</h2></div>
+        <div class="card-head">
+          <h2 class="h4">내가 쓴 댓글</h2>
+        </div>
         <div class="table-head table-grid-3">
-          <div>내용</div><div>작성일</div><div>수정일</div>
+          <div>내용</div>
+          <div>작성일</div>
+          <div>수정일</div>
         </div>
         <div id="myComments"></div>
         <nav id="pgMyComments" class="pagination"></nav>

@@ -1,4 +1,4 @@
-// post-detail.js
+// postDetail.js
 import { renderHeader, showToast, confirmModal, setInlineMessage, clearInlineMessage } from './common.js';
 import { apiFetch } from './api.js';
 
@@ -133,7 +133,7 @@ async function loadPost() {
 
         try {
           await apiFetch(`/posts/${postId}`, { method: 'DELETE' });
-          showToast('게시글이 삭제되었습니다.', 'success');
+          // 성공 토스트 없이 목록으로 이동
           location.href = 'posts.html';
         } catch (e) {
           console.error('[postDetail] delete error', e);
@@ -255,7 +255,7 @@ async function loadComments() {
           try {
             await patchComment(id, next);
             await loadComments();
-            showToast('댓글이 수정되었습니다.', 'success');
+            // 성공 토스트 없이 목록만 갱신
           } catch (e) {
             console.error('[comments] patch error', e);
             showToast('댓글 수정에 실패했습니다.', 'error');
@@ -282,7 +282,7 @@ async function loadComments() {
         try {
           await deleteComment(id);
           itemEl.remove();
-          showToast('댓글이 삭제되었습니다.', 'success');
+          // 성공 토스트 없이 바로 제거
         } catch (e) {
           console.error('[comments] delete error', e);
           showToast('댓글 삭제에 실패했습니다.', 'error');
@@ -317,7 +317,7 @@ commentForm?.addEventListener('submit', async (e) => {
     await createComment(content);
     commentInput.value = '';
     await loadComments();
-    showToast('댓글이 등록되었습니다.', 'success');
+    // 성공 토스트 없이 목록만 갱신
   } catch (err) {
     console.error('[comments] create error', err);
     const msg = String(err?.message || '');

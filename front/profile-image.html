@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>프로필 이미지 수정 · Community</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <link rel="stylesheet" href="styles/style.css" />
+</head>
+<body>
+  <script type="module">
+    import { loadLayout } from './scripts/layout.js';
+    import { renderHeader } from './scripts/common.js';
+    loadLayout().then(() => renderHeader());
+  </script>
+
+  <div id="app-header"></div>
+
+  <main class="container page-padding">
+    <div class="form-wrap" style="max-width:560px;margin:0 auto;">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h1 class="h4 mb-16">프로필 이미지 수정</h1>
+
+          <section class="mb-16">
+            <div class="profile-image-block">
+              <img
+                id="profileImagePreview"
+                src="./assets/img/comong.png"
+                alt="프로필 이미지 미리보기"
+                class="avatar"
+              />
+              <div>
+                <input
+                  id="profileImageFile"
+                  type="file"
+                  accept="image/*"
+                  class="form-control"
+                />
+                <div class="form-hint">
+                  새 이미지를 선택하면 미리보기만 바뀌고,
+                  <b>이미지 저장</b> 버튼을 눌러야 서버에 저장됩니다.
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-accent"
+                  id="profileImageSaveBtn"
+                  style="margin-top:8px;"
+                >
+                  이미지 저장
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-light"
+                  id="profileImageDeleteBtn"
+                  style="margin-top:8px;margin-left:8px;"
+                >
+                  기본 이미지로 되돌리기
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <div class="actions" style="justify-content:flex-end;">
+            <a href="my-page.html" class="btn btn-light">마이페이지로</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="./scripts/profileImage.js"></script>
+</body>
+</html>

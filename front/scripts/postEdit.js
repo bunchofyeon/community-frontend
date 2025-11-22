@@ -1,4 +1,4 @@
-// post-edit.js
+// postEdit.js
 import { requireAuth, showToast, confirmModal, setInlineMessage, clearInlineMessage } from './common.js';
 import { apiFetch } from './api.js';
 
@@ -230,8 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
-      if (msgSel) setInlineMessage(msgSel, '수정되었습니다.', 'success');
-      showToast('게시글이 수정되었습니다.', 'success');
+      // 성공 토스트 없이 상세 페이지로 이동
       location.href = `post-detail.html?id=${postId}`;
     } catch (err) {
       console.error('[edit] save error', err);

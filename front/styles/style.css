@@ -557,7 +557,7 @@ main {
 
 /* 개별 토스트 */
 .toast {
-  position: relative;        /* 기존 bottom 고정값 무효화용 */
+  position: relative;
   inset: auto;
   margin: 0;
   width: 100%;
@@ -579,22 +579,32 @@ main {
   transform: translateY(-10px);
 }
 
-/* 타입별 색상 조금만 튜닝(원하면) */
+/* 타입별 색상 */
 .toast.toast--error  { background: #ef4444; color:#fff; }
 .toast.toast--success{ background: #22c55e; color:#fff; }
 .toast.toast--info   { background: #0ea5e9; color:#fff; }
 
-/* === Modal 개선 (배경 어둡게 + 글자 또렷하게) ================= */
+/* === Modal 개선 (배경 어둡게 + 가운데 흰 카드) ================= */
 
+/* 전체 오버레이 + 가운데 정렬 */
 .modal {
   position: fixed;
   inset: 0;
   display: grid;
   place-items: center;
   z-index: 60;
-  background: rgba(15, 23, 42, 0.55);  /* 더 진한 어두운 오버레이 */
+  background: rgba(15, 23, 42, 0.55);
+  opacity: 1;
+  transition: opacity .2s ease;
 }
 
+/* 숨길 때 */
+.modal.modal--hide {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 중앙 카드 */
 .modal .sheet {
   width: min(480px, calc(100% - 32px));
   background: var(--surface);
@@ -607,7 +617,7 @@ main {
 
 .modal .sheet h2,
 .modal .sheet p {
-  color: var(--text);          /* 반투명 X, 그냥 기본 텍스트 색 */
+  color: var(--text);
   margin: 0 0 12px;
 }
 
@@ -616,4 +626,9 @@ main {
   justify-content: flex-end;
   gap: 8px;
   margin-top: 8px;
+}
+
+#nicknameCheckBtn {
+  min-width: 60px;
+  white-space: nowrap;
 }

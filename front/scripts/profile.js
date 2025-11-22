@@ -121,6 +121,7 @@ async function checkNicknameUnique() {
   if (ME && nickname === ME.nickname) {
     lastCheckedNickname = nickname;
     if (msgSel) setInlineMessage(msgSel, '현재 사용 중인 닉네임입니다.', 'info');
+    // 굳이 토스트는 안 띄워도 될 듯해서 그대로 둠
     return true;
   }
 
@@ -128,11 +129,13 @@ async function checkNicknameUnique() {
     await apiFetch(API.checkNickname(nickname), { method: 'GET' });
     lastCheckedNickname = nickname;
     if (msgSel) setInlineMessage(msgSel, '사용 가능한 닉네임입니다.', 'success');
+    // ✅ 사용 가능 토스트
     showToast('사용 가능한 닉네임입니다.', 'success');
     return true;
   } catch (err) {
     console.error('[profile] nickname check error', err);
     if (msgSel) setInlineMessage(msgSel, '이미 사용 중인 닉네임입니다.', 'error');
+    // ✅ 중복 토스트
     showToast('닉네임 중복입니다.', 'error');
     return false;
   }
@@ -231,7 +234,7 @@ $profileImageSaveBtn?.addEventListener('click', async (e) => {
       $profileFileInput.value = '';
     }
 
-    showToast('프로필 이미지가 저장되었습니다.', 'success');
+    // 성공 토스트는 제거 (이미지 자체가 바뀌어서 피드백 충분)
   } catch (err) {
     console.error('[profile] image save error', err);
     showToast('이미지 저장 실패', 'error');
@@ -251,7 +254,7 @@ $deleteBtn?.addEventListener('click', async () => {
   try {
     await apiFetch('/users/me', { method: 'DELETE' });
     localStorage.removeItem('token');
-    showToast('탈퇴가 완료되었습니다.', 'success');
+    // 성공 토스트 없이 회원가입 페이지로 이동
     location.href = 'signup.html';
   } catch (err) {
     console.error('[profile] withdraw error', err);
@@ -331,7 +334,7 @@ $form?.addEventListener('submit', async (e) => {
       if (pwdSel) setInlineMessage(pwdSel, '비밀번호가 변경되었습니다.', 'success');
     }
 
-    showToast('프로필이 수정되었습니다.', 'success');
+    // 성공 토스트는 제거, 필요하다면 이 페이지에 그대로 머무르며 인라인 메시지만 보여줌
     location.href = 'my-page.html';
   } catch (err) {
     console.error('[profile] update error', err);

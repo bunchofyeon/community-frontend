@@ -40,8 +40,7 @@ form?.addEventListener('submit', async (e) => {
     const token = res.data?.token || res.token;
     localStorage.setItem('token', token);
 
-    if (msgSel) setInlineMessage(msgSel, '로그인 성공! 게시글 목록으로 이동합니다.', 'success');
-    showToast('로그인 성공!', 'success');
+    // 성공 토스트/메시지는 없이 바로 이동
     location.href = 'posts.html';
   } catch (err) {
     console.error('[login] error', err);

@@ -73,7 +73,7 @@ form?.addEventListener('submit', async (e) => {
     }
 
     if (msgSel) setInlineMessage(msgSel, '회원가입 완료! 마이페이지로 이동합니다.', 'success');
-    showToast('회원가입 완료!', 'success');
+    // 성공 토스트 없이 바로 마이페이지 이동
     location.href = 'my-page.html';
   } catch (err) {
     console.error('[signup] error', err);

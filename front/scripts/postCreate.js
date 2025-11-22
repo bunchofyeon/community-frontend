@@ -1,4 +1,4 @@
-// post-create.js
+// postCreate.js
 import { requireAuth, setInlineMessage, clearInlineMessage, showToast } from './common.js';
 import { apiFetch } from './api.js';
 
@@ -82,8 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
-      if (msgSel) setInlineMessage(msgSel, '게시글 등록 성공! 상세 페이지로 이동합니다.', 'success');
-      showToast('게시글 등록 성공!', 'success');
+      // 성공 토스트 없이 바로 상세 페이지로 이동
       location.href = `post-detail.html?id=${newId}`;
     } catch (err) {
       console.error('[create] error', err);
