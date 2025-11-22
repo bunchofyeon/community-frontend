@@ -1,5 +1,5 @@
-// scripts/postEdit.js
-import { requireAuth } from './common.js';
+// post-edit.js
+import { requireAuth, showToast, confirmModal, setInlineMessage, clearInlineMessage } from './common.js';
 import { apiFetch } from './api.js';
 
 requireAuth();
@@ -29,7 +29,7 @@ function getPostIdRobust() {
 document.addEventListener('DOMContentLoaded', () => {
   const postId = getPostIdRobust();
   if (!postId) {
-    alert('잘못된 접근입니다. (게시글 id 누락)');
+    showToast('잘못된 접근입니다. (게시글 id 누락)', 'error');
     location.replace('posts.html');
     return;
   }
@@ -41,8 +41,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const cancelBtn = document.getElementById('cancelBtn');
 
   const existingFilesContainer = document.getElementById('existingFiles');
-  const newFilesInput = document.getElementById('newPostFiles'); // ✅ HTML id와 통일
+  const newFilesInput = document.getElementById('newPostFiles');
   const newFilePreview = document.getElementById('newFilePreview');
+
+  function editMsgSel() {
+    let el = document.querySelector('#editMessage');
+    if (!el && form) {
+      el = document.createElement('p');
+      el.id = 'editMessage';
+      el.className = 'form-message';
+      form.appendChild(el);
+    }
+    return el ? '#editMessage' : null;
+  }
 
   if (titleEl) titleEl.setAttribute('maxlength', '26');
 
@@ -51,9 +62,9 @@ document.addEventListener('DOMContentLoaded', () => {
     location.href = `post-detail.html?id=${postId}`;
   });
 
-  let existingFiles = [];   // 서버에 저장된 파일 목록
-  let filesToDelete = [];   // 삭제할 fileId 모음
-  let newFiles = [];        // 새로 추가할 File 객체들
+  let existingFiles = [];
+  let filesToDelete = [];
+  let newFiles = [];
 
   const esc = (str = '') =>
     String(str)
@@ -89,11 +100,18 @@ document.addEventListener('DOMContentLoaded', () => {
       .join('');
 
     existingFilesContainer.querySelectorAll('.file-delete-btn').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         const row = e.currentTarget.closest('.file-row');
         const fileId = row?.getAttribute('data-file-id');
         if (!fileId) return;
-        if (!confirm('이 파일을 삭제하시겠습니까?')) return;
+
+        const ok = await confirmModal({
+          title: '파일 삭제',
+          message: '이 파일을 삭제하시겠습니까?',
+          confirmText: '삭제',
+          cancelText: '취소',
+        });
+        if (!ok) return;
 
         filesToDelete.push(Number(fileId));
         existingFiles = existingFiles.filter((f) => String(f.id) !== String(fileId));
@@ -119,10 +137,9 @@ document.addEventListener('DOMContentLoaded', () => {
     renderNewFilePreview();
   });
 
-  // ===== 게시글 및 파일 정보 로드 =====
+  // 게시글 및 파일 로드
   (async () => {
     try {
-      // 1) 게시글 본문
       const res = await apiFetch(`/posts/${postId}`, { method: 'GET' });
       const p = res?.data ?? res;
 
@@ -130,7 +147,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (titleEl) titleEl.value = p?.title ?? '';
       if (contentEl) contentEl.value = p?.content ?? '';
 
-      // 2) 첨부 파일 목록
       try {
         const fileRes = await apiFetch(`/posts/${postId}/files`, { method: 'GET' });
         const list = fileRes?.data ?? fileRes;
@@ -140,15 +156,16 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('[edit] 파일 목록 로드 실패', e);
         existingFiles = [];
         renderExistingFiles();
+        showToast('첨부 파일 목록을 불러오지 못했습니다.', 'error');
       }
     } catch (err) {
       console.error('[edit] load error', err);
-      alert('게시글을 불러오지 못했습니다.');
+      showToast('게시글을 불러오지 못했습니다.', 'error');
       location.replace('posts.html');
     }
   })();
 
-  // ===== 저장 =====
+  // 저장
   let pending = false;
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -156,19 +173,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const title = titleEl?.value.trim();
     const content = contentEl?.value.trim();
+    const msgSel = editMsgSel();
+    if (msgSel) clearInlineMessage(msgSel);
 
     if (!title) {
-      alert('제목을 입력하세요.');
+      if (msgSel) setInlineMessage(msgSel, '제목을 입력하세요.', 'error');
+      showToast('제목을 입력해주세요.', 'error');
       titleEl?.focus();
       return;
     }
     if (title.length > 26) {
-      alert('제목은 최대 26자까지 가능합니다.');
+      if (msgSel) setInlineMessage(msgSel, '제목은 최대 26자까지 가능합니다.', 'error');
+      showToast('제목은 최대 26자까지 가능합니다.', 'error');
       titleEl?.focus();
       return;
     }
     if (!content) {
-      alert('내용을 입력하세요.');
+      if (msgSel) setInlineMessage(msgSel, '내용을 입력하세요.', 'error');
+      showToast('내용을 입력해주세요.', 'error');
       contentEl?.focus();
       return;
     }
@@ -186,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({ title, content }),
       });
 
-      // 2) 삭제 신청된 파일 삭제
+      // 2) 파일 삭제
       for (const fileId of filesToDelete) {
         try {
           await apiFetch(`/posts/${postId}/files/${fileId}`, {
@@ -200,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // 3) 새 파일 업로드
       if (newFiles.length > 0) {
         const fd = new FormData();
-        newFiles.forEach((file) => fd.append('files', file)); // ✅ @RequestPart("files")
+        newFiles.forEach((file) => fd.append('files', file));
 
         await apiFetch(`/posts/${postId}/files`, {
           method: 'POST',
@@ -208,16 +230,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
-      alert('수정되었습니다.');
+      if (msgSel) setInlineMessage(msgSel, '수정되었습니다.', 'success');
+      showToast('게시글이 수정되었습니다.', 'success');
       location.href = `post-detail.html?id=${postId}`;
     } catch (err) {
       console.error('[edit] save error', err);
       const msg = String(err?.message || '');
       if (msg.startsWith('401') || msg.includes('[401]')) {
-        alert('수정 실패: 인증이 필요합니다. 다시 로그인해주세요.');
+        showToast('수정 실패: 인증이 필요합니다. 다시 로그인해주세요.', 'error');
         location.href = 'login.html';
       } else {
-        alert('수정 실패: ' + msg);
+        showToast('게시글 수정에 실패했습니다.', 'error');
       }
     } finally {
       pending = false;

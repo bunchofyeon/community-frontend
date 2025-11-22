@@ -31,44 +31,6 @@
   --masthead-h: 8rem;
 }
 
-/* 다크모드(시스템) */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0c0c10;
-    --surface: #111218;
-    --text: #f5f5f7;
-    --muted: #a0a0ad;
-    --line: #1e1e25;
-    --shadow-sm: 0 1px 4px rgba(0,0,0,.4);
-    --shadow-md: 0 10px 28px rgba(0,0,0,.5);
-    --masthead-overlay: rgba(0,0,0,.45);
-  }
-}
-
-/* 다크모드 수동 토글 */
-.theme-dark {
-  --bg: #0c0c10;
-  --surface: #111218;
-  --text: #f5f5f7;
-  --muted: #a0a0ad;
-  --line: #1e1e25;
-  --shadow-sm: 0 1px 4px rgba(0,0,0,.4);
-  --shadow-md: 0 10px 28px rgba(0,0,0,.5);
-  --masthead-overlay: rgba(0,0,0,.45);
-}
-
-/* 라이트모드 수동 토글 */
-.theme-light {
-  --bg: #f8f9fa;
-  --surface: #ffffff;
-  --text: #212529;
-  --muted: #6b7280;
-  --line: #e9ecef;
-  --shadow-sm: 0 1px 4px rgba(0,0,0,.06);
-  --shadow-md: 0 8px 24px rgba(0,0,0,.12);
-  --masthead-overlay: rgba(33,37,41,.55);
-}
-
 /* 기본 리셋 */
 * { box-sizing: border-box; }
 html, body { height: 100%; }
@@ -551,19 +513,19 @@ main {
   margin-top: 8px;
 }
 /* === My Page 전용 보강 === */
-.grid.g-24 { gap: 24px; }              /* 카드 사이 여백 확대 */
-.section + .section { margin-top: 20px; } /* 섹션 간 기본 간격 */
+.grid.g-24 { gap: 24px; } 
+.section + .section { margin-top: 20px; }
 
 .withdraw-wrap {
   display: flex;
   justify-content: center;
-  margin: 24px 0 8px;                  /* 위·아래 여백 */
+  margin: 24px 0 8px;
 }
 
 /* 버튼: 작은 사이즈 + 연한 회색 */
 .btn.sm { height: 34px; padding: 0 12px; font-size: var(--fz-sm); }
 .btn-muted {
-  background: #f1f3f5;                 /* 연회색 */
+  background: #f1f3f5; 
   color: #495057;
   border: 1px solid #e9ecef;
 }
@@ -573,9 +535,85 @@ main {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-left: auto;   /* 오른쪽 정렬 */
+  margin-left: auto;
 }
-/* 둘 다 같은 크기 보장 (원하면 값 조정 가능) */
+/* 둘 다 같은 크기 보장 */
 .summary .actions-col .btn { width: 140px; }
 
+/* ===== Toast (상단 중앙으로) ===== */
 
+/* 토스트들이 붙는 컨테이너 */
+.toast-container {
+  position: fixed;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;      /* 토스트 뒤에 있는 버튼 클릭 가능 */
+}
+
+/* 개별 토스트 */
+.toast {
+  position: relative;        /* 기존 bottom 고정값 무효화용 */
+  inset: auto;
+  margin: 0;
+  width: 100%;
+  max-width: 360px;
+  background: var(--accent);
+  color: #212529;
+  padding: 10px 14px;
+  border-radius: 999px;
+  box-shadow: var(--shadow-md);
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity .25s ease, transform .25s ease;
+  pointer-events: auto;
+}
+
+/* 사라질 때 효과용 클래스 (JS에서 add/remove) */
+.toast--hide {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* 타입별 색상 조금만 튜닝(원하면) */
+.toast.toast--error  { background: #ef4444; color:#fff; }
+.toast.toast--success{ background: #22c55e; color:#fff; }
+.toast.toast--info   { background: #0ea5e9; color:#fff; }
+
+/* === Modal 개선 (배경 어둡게 + 글자 또렷하게) ================= */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 60;
+  background: rgba(15, 23, 42, 0.55);  /* 더 진한 어두운 오버레이 */
+}
+
+.modal .sheet {
+  width: min(480px, calc(100% - 32px));
+  background: var(--surface);
+  color: var(--text);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line);
+  padding: 20px 20px 16px;
+  box-shadow: var(--shadow-md);
+}
+
+.modal .sheet h2,
+.modal .sheet p {
+  color: var(--text);          /* 반투명 X, 그냥 기본 텍스트 색 */
+  margin: 0 0 12px;
+}
+
+.modal .sheet .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}

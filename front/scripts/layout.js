@@ -1,5 +1,4 @@
-// scripts/layout.js
-// 외부 템플릿을 불러오지 않고 "헤더만" 직접 주입합니다.
+// layout.js
 export async function loadLayout() {
   const header = document.getElementById('app-header');
   if (!header) return;
@@ -20,7 +19,6 @@ export async function loadLayout() {
     </header>
   `;
 
-  // 로그인/로그아웃 표기 전환
   const token = localStorage.getItem('token');
   const login = header.querySelector('#loginLink');
   const signup = header.querySelector('#signupLink');
@@ -30,10 +28,5 @@ export async function loadLayout() {
     login?.setAttribute('style', 'display:none;');
     signup?.setAttribute('style', 'display:none;');
     logout?.setAttribute('style', 'display:inline-block;');
-    logout?.addEventListener('click', (e) => {
-      e.preventDefault();
-      localStorage.removeItem('token');
-      location.href = 'login.html';
-    });
   }
 }

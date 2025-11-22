@@ -1,17 +1,8 @@
-// scripts/mypage.js
-import { requireAuth } from './common.js';
+// my-page.js
+import { requireAuth, showToast, confirmModal } from './common.js';
 import { apiFetch } from './api.js';
 
 requireAuth();
-
-/** ========= 백엔드 엔드포인트 매핑 ========= */
-const API = {
-  me: '/users/me',
-  myPosts: '/users/myPosts',
-  myComments: '/users/myComments',
-  withdrawMe: '/users/me',
-  withdrawById: (id) => `/users/${id}`,
-};
 
 const $ = (sel) => document.querySelector(sel);
 const dom = {
@@ -27,6 +18,14 @@ const dom = {
   withdrawBtn: $('#withdrawBtn'),
 };
 
+const API = {
+  me: '/users/me',
+  myPosts: '/users/myPosts',
+  myComments: '/users/myComments',
+  withdrawMe: '/users/me',
+  withdrawById: (id) => `/users/${id}`,
+};
+
 function fmtDate(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -37,7 +36,7 @@ async function safeFetch(url, init) {
   return await apiFetch(url, init);
 }
 
-/** ========= 요약 정보 ========= */
+// 요약 정보
 async function loadSummary() {
   try {
     const res = await safeFetch(API.me, { method: 'GET' });
@@ -51,15 +50,12 @@ async function loadSummary() {
     }
   } catch (e) {
     console.error('[mypage] me load error', e);
-    if (dom.avatar) {
-      dom.avatar.src = './assets/img/comong.png';
-    }
+    if (dom.avatar) dom.avatar.src = './assets/img/comong.png';
+    showToast('내 정보 로드에 실패했습니다.', 'error');
   }
 }
 
-/** ========= 내 글 ========= */
-let postsUiPage = 1;
-
+// 페이지네이터 도우미
 function makePager(el, uiPage, totalPages, onMove) {
   if (!el) return;
   const btn = (label, to, { active = false, disabled = false } = {}) => {
@@ -80,6 +76,9 @@ function makePager(el, uiPage, totalPages, onMove) {
   for (let p = start; p <= end; p++) el.appendChild(btn(String(p), p, { active: p === uiPage }));
   el.appendChild(btn('›', Math.min(totalPages, uiPage + 1), { disabled: uiPage === totalPages }));
 }
+
+// 내가 쓴 글
+let postsUiPage = 1;
 
 async function loadMyPosts(previewOnly = false) {
   const page = postsUiPage - 1;
@@ -113,15 +112,16 @@ async function loadMyPosts(previewOnly = false) {
     makePager(dom.postsPager, postsUiPage, totalPages, (to) => { postsUiPage = to; loadMyPosts(); });
     return { items, totalPages };
   } catch (e) {
+    console.error('[mypage] posts load error', e);
     if (!previewOnly && dom.postsWrap) {
-      console.error(e);
       dom.postsWrap.innerHTML = `<div class="empty">목록을 불러오지 못했습니다.</div>`;
     }
+    showToast('내가 쓴 글을 불러오지 못했습니다.', 'error');
     return null;
   }
 }
 
-/** ========= 내 댓글 ========= */
+// 댓글 헬퍼
 let commentsUiPage = 1;
 
 function resolvePostIdDeep(obj, depth = 0, seen = new Set()) {
@@ -201,29 +201,37 @@ async function loadMyComments(previewOnly = false) {
 
     return { items, totalPages };
   } catch (e) {
-    console.error(e);
+    console.error('[mypage] comments load error', e);
     if (!previewOnly && dom.commentsWrap) {
       dom.commentsWrap.innerHTML = `<div class="empty">목록을 불러오지 못했습니다.</div>`;
     }
+    showToast('내 댓글 목록을 불러오지 못했습니다.', 'error');
     return null;
   }
 }
 
-/** ========= 회원 탈퇴 ========= */
+// 회원 탈퇴
 dom.withdrawBtn?.addEventListener('click', async () => {
-  if (!confirm('정말 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+  const ok = await confirmModal({
+    title: '회원 탈퇴',
+    message: '정말 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
+    confirmText: '탈퇴',
+    cancelText: '취소',
+  });
+  if (!ok) return;
 
   try {
     await safeFetch(API.withdrawMe, { method: 'DELETE' });
     localStorage.removeItem('token');
-    alert('탈퇴 완료');
+    showToast('탈퇴가 완료되었습니다.', 'success');
     location.href = 'signup.html';
   } catch (e) {
-    alert('탈퇴 실패: ' + (e?.message || '알 수 없는 오류'));
+    console.error('[mypage] withdraw error', e);
+    showToast('탈퇴 처리에 실패했습니다.', 'error');
   }
 });
 
-/** ========= 부트스트랩 ========= */
+// 부트스트랩
 document.addEventListener('DOMContentLoaded', async () => {
   dom.avatar?.addEventListener('error', () => {
     dom.avatar.src = './assets/img/comong.png';

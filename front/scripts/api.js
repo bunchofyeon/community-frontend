@@ -1,4 +1,4 @@
-// scripts/api.js
+// api.js
 import { loadLayout } from './layout.js';
 import { renderHeader } from './common.js';
 
@@ -7,16 +7,14 @@ async function bootHeaderOnce() {
 
   const headerEl = document.getElementById('app-header');
   if (!headerEl) {
-    // 이 페이지는 헤더를 쓰지 않음
     window.__headerLoaded = true;
     return;
   }
 
-  await loadLayout();   // #app-header에 헤더 HTML 주입
-  renderHeader();       // active 처리, 로그인/로그아웃 토글
+  await loadLayout();
+  renderHeader();
   window.__headerLoaded = true;
 }
-
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', bootHeaderOnce, { once: true });

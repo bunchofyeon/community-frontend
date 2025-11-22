@@ -1,5 +1,5 @@
-// scripts/postCreate.js
-import { requireAuth } from './common.js';
+// post-create.js
+import { requireAuth, setInlineMessage, clearInlineMessage, showToast } from './common.js';
 import { apiFetch } from './api.js';
 
 requireAuth();
@@ -9,7 +9,18 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!form) return;
 
   const submitBtn = document.getElementById('submitBtn');
-  const filesInput = document.getElementById('postFiles'); // ✅ HTML id와 통일
+  const filesInput = document.getElementById('postFiles');
+
+  function createMsgSel() {
+    let el = document.querySelector('#createMessage');
+    if (!el && form) {
+      el = document.createElement('p');
+      el.id = 'createMessage';
+      el.className = 'form-message';
+      form.appendChild(el);
+    }
+    return el ? '#createMessage' : null;
+  }
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -20,13 +31,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const title = titleEl?.value?.trim();
     const content = contentEl?.value?.trim();
 
+    const msgSel = createMsgSel();
+    if (msgSel) clearInlineMessage(msgSel);
+
     if (!title) {
-      alert('제목을 입력하세요.');
+      if (msgSel) setInlineMessage(msgSel, '제목을 입력하세요.', 'error');
+      showToast('제목을 입력해주세요.', 'error');
       titleEl?.focus();
       return;
     }
     if (!content) {
-      alert('내용을 입력하세요.');
+      if (msgSel) setInlineMessage(msgSel, '내용을 입력하세요.', 'error');
+      showToast('내용을 입력해주세요.', 'error');
       contentEl?.focus();
       return;
     }
@@ -37,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.textContent = '등록 중…';
       }
 
-      // 1) 게시글 본문 먼저 생성
+      // 1) 게시글 생성
       const res = await apiFetch('/posts/write', {
         method: 'POST',
         body: JSON.stringify({ title, content }),
@@ -47,30 +63,32 @@ document.addEventListener('DOMContentLoaded', () => {
       const newId = data?.id ?? data?.postId;
 
       if (!newId) {
-        alert('게시글 등록은 성공했지만 ID를 확인하지 못했습니다. 목록으로 이동합니다.');
+        if (msgSel) setInlineMessage(msgSel, '게시글 등록은 되었지만 ID를 확인하지 못했습니다. 목록으로 이동합니다.', 'info');
+        showToast('게시글 등록은 되었지만 ID 확인에 실패했습니다.', 'info');
         location.href = 'posts.html';
         return;
       }
 
-      // 2) 첨부파일이 있으면 /posts/{id}/files 로 업로드
+      // 2) 첨부파일 업로드
       if (filesInput && filesInput.files && filesInput.files.length > 0) {
         const fd = new FormData();
-        // ✅ @RequestPart("files")와 이름 딱 맞추기
         Array.from(filesInput.files).forEach((file) => {
           fd.append('files', file);
         });
 
         await apiFetch(`/posts/${newId}/files`, {
           method: 'POST',
-          body: fd, // ✅ Content-Type 자동 설정 (FormData)
+          body: fd,
         });
       }
 
-      alert('게시글 등록 성공!');
+      if (msgSel) setInlineMessage(msgSel, '게시글 등록 성공! 상세 페이지로 이동합니다.', 'success');
+      showToast('게시글 등록 성공!', 'success');
       location.href = `post-detail.html?id=${newId}`;
     } catch (err) {
       console.error('[create] error', err);
-      alert('등록 실패: ' + (err?.message || ''));
+      if (msgSel) setInlineMessage(msgSel, '게시글 등록에 실패했습니다.', 'error');
+      showToast('게시글 등록에 실패했습니다.', 'error');
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;

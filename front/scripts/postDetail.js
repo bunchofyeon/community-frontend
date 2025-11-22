@@ -1,4 +1,5 @@
-import { renderHeader } from './common.js';
+// post-detail.js
+import { renderHeader, showToast, confirmModal, setInlineMessage, clearInlineMessage } from './common.js';
 import { apiFetch } from './api.js';
 
 renderHeader();
@@ -21,8 +22,19 @@ const esc = (s = '') =>
 
 const isEdited = (c, u) => c && u && new Date(u).getTime() !== new Date(c).getTime();
 
-// ApiResponse 형식 { message, data } → data만 꺼내기
 const unwrap = (r) => (r && typeof r === 'object' && 'data' in r ? r.data : r);
+
+// 댓글 인라인 메시지 영역
+function commentMsgSel() {
+  let el = document.querySelector('#commentMessage');
+  if (!el && commentForm) {
+    el = document.createElement('p');
+    el.id = 'commentMessage';
+    el.className = 'form-message';
+    commentForm.appendChild(el);
+  }
+  return el ? '#commentMessage' : null;
+}
 
 function renderFilesSection(files) {
   if (!Array.isArray(files) || !files.length) return '';
@@ -63,19 +75,18 @@ async function loadPostFiles() {
     const files = Array.isArray(list) ? list : [];
     const html = renderFilesSection(files);
     if (html && detailEl) {
-      // 본문 아래에 붙이기
       detailEl.insertAdjacentHTML('beforeend', html);
     }
   } catch (e) {
-    // 파일 없거나 에러여도 글 자체는 보이게 그냥 무시
     console.warn('[postDetail] 파일 목록 로드 실패', e);
+    showToast('첨부 이미지를 불러오지 못했습니다.', 'error');
   }
 }
 
 // 게시글 상세
 async function loadPost() {
   if (!postId) {
-    alert('잘못된 접근입니다. (id 누락)');
+    showToast('잘못된 접근입니다. (id 누락)', 'error');
     location.replace('posts.html');
     return;
   }
@@ -112,31 +123,39 @@ async function loadPost() {
 
     if (isLoggedIn()) {
       document.getElementById('deleteBtn')?.addEventListener('click', async () => {
-        if (!confirm('삭제하시겠습니까?')) return;
+        const ok = await confirmModal({
+          title: '게시글 삭제',
+          message: '이 게시글을 삭제하시겠습니까?',
+          confirmText: '삭제',
+          cancelText: '취소',
+        });
+        if (!ok) return;
+
         try {
           await apiFetch(`/posts/${postId}`, { method: 'DELETE' });
-          alert('삭제 완료');
+          showToast('게시글이 삭제되었습니다.', 'success');
           location.href = 'posts.html';
         } catch (e) {
-          alert('삭제 실패: ' + (e?.message || ''));
+          console.error('[postDetail] delete error', e);
+          showToast('게시글 삭제에 실패했습니다.', 'error');
         }
       });
     }
 
-    // 글 로드 후 첨부파일 별도 호출
     await loadPostFiles();
   } catch (err) {
+    console.error('[postDetail] load error', err);
     const msg = String(err?.message || '');
     if (msg.includes('[401]')) {
-      alert('로그인이 필요합니다.');
+      showToast('로그인이 필요합니다.', 'error');
       location.href = 'login.html';
       return;
     }
-    alert('게시글을 불러오지 못했습니다: ' + msg);
+    showToast('게시글을 불러오지 못했습니다.', 'error');
   }
 }
 
-// 댓글
+// 댓글 API
 async function getComments() {
   const r = await apiFetch(
     `/posts/${postId}/comments/list?page=0&size=100&sort=createdAt,asc`,
@@ -164,6 +183,7 @@ async function deleteComment(id) {
   return await apiFetch(`/posts/${postId}/comments/${id}`, { method: 'DELETE' });
 }
 
+// 렌더링
 function renderCommentRow(c) {
   const showEdit = isLoggedIn();
   const showDelete = isLoggedIn();
@@ -215,18 +235,30 @@ async function loadComments() {
       if (!original) return;
 
       itemEl.querySelector('.edit')?.addEventListener('click', () => {
-        if (!isLoggedIn()) return alert('로그인이 필요합니다.');
+        if (!isLoggedIn()) {
+          showToast('로그인이 필요합니다.', 'error');
+          return;
+        }
         toEditMode(itemEl, original);
 
         itemEl.querySelector('.save')?.addEventListener('click', async () => {
           const ta = itemEl.querySelector('textarea');
           const next = (ta?.value ?? '').trim();
-          if (!next) return alert('내용을 입력하세요.');
+          const msgSel = commentMsgSel();
+          if (msgSel) clearInlineMessage(msgSel);
+
+          if (!next) {
+            if (msgSel) setInlineMessage(msgSel, '댓글 내용을 입력하세요.', 'error');
+            showToast('댓글 내용을 입력해주세요.', 'error');
+            return;
+          }
           try {
             await patchComment(id, next);
             await loadComments();
+            showToast('댓글이 수정되었습니다.', 'success');
           } catch (e) {
-            alert('수정 실패: ' + (e?.message || ''));
+            console.error('[comments] patch error', e);
+            showToast('댓글 수정에 실패했습니다.', 'error');
           }
         });
 
@@ -234,39 +266,67 @@ async function loadComments() {
       });
 
       itemEl.querySelector('.delete')?.addEventListener('click', async () => {
-        if (!isLoggedIn()) return alert('로그인이 필요합니다.');
-        if (!confirm('이 댓글을 삭제할까요?')) return;
+        if (!isLoggedIn()) {
+          showToast('로그인이 필요합니다.', 'error');
+          return;
+        }
+
+        const ok = await confirmModal({
+          title: '댓글 삭제',
+          message: '이 댓글을 삭제하시겠습니까?',
+          confirmText: '삭제',
+          cancelText: '취소',
+        });
+        if (!ok) return;
+
         try {
           await deleteComment(id);
           itemEl.remove();
+          showToast('댓글이 삭제되었습니다.', 'success');
         } catch (e) {
-          alert('삭제 실패: ' + (e?.message || ''));
+          console.error('[comments] delete error', e);
+          showToast('댓글 삭제에 실패했습니다.', 'error');
         }
       });
     });
   } catch (e) {
+    console.error('[comments] load error', e);
     commentListEl.innerHTML = `<div class="empty">댓글을 불러오지 못했습니다.</div>`;
+    showToast('댓글을 불러오지 못했습니다.', 'error');
   }
 }
 
 /* ========== 댓글 작성 ========== */
 commentForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
-  if (!isLoggedIn()) return alert('댓글 작성은 로그인 후 가능합니다.');
+  const msgSel = commentMsgSel();
+  if (msgSel) clearInlineMessage(msgSel);
+
+  if (!isLoggedIn()) {
+    showToast('댓글 작성은 로그인 후 가능합니다.', 'error');
+    location.href = 'login.html';
+    return;
+  }
   const content = (commentInput?.value ?? '').trim();
-  if (!content) return alert('댓글 내용을 입력하세요.');
+  if (!content) {
+    if (msgSel) setInlineMessage(msgSel, '댓글 내용을 입력하세요.', 'error');
+    showToast('댓글 내용을 입력해주세요.', 'error');
+    return;
+  }
   try {
     await createComment(content);
     commentInput.value = '';
     await loadComments();
+    showToast('댓글이 등록되었습니다.', 'success');
   } catch (err) {
+    console.error('[comments] create error', err);
     const msg = String(err?.message || '');
     if (msg.includes('[401]')) {
-      alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+      showToast('세션이 만료되었습니다. 다시 로그인해주세요.', 'error');
       location.href = 'login.html';
       return;
     }
-    alert('댓글 등록 실패: ' + msg);
+    showToast('댓글 등록에 실패했습니다.', 'error');
   }
 });
 

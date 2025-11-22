@@ -1,21 +1,51 @@
-import { renderHeader } from './common.js';
+// login.js
+import { renderHeader, setInlineMessage, clearInlineMessage, showToast } from './common.js';
 import { apiFetch } from './api.js';
+
 renderHeader('login');
 
-document.querySelector('#loginForm').addEventListener('submit', async (e) => {
-  e.preventDefault(); // 페이지 새로고침 방지
+const form = document.querySelector('#loginForm');
+
+function loginMsgSel() {
+  let el = document.querySelector('#loginMessage');
+  if (!el && form) {
+    el = document.createElement('p');
+    el.id = 'loginMessage';
+    el.className = 'form-message';
+    form.appendChild(el);
+  }
+  return el ? '#loginMessage' : null;
+}
+
+form?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
   const email = document.querySelector('#email').value.trim();
   const password = document.querySelector('#password').value;
+
+  const msgSel = loginMsgSel();
+  if (msgSel) clearInlineMessage(msgSel);
+
+  if (!email || !password) {
+    if (msgSel) setInlineMessage(msgSel, '이메일과 비밀번호를 모두 입력해주세요.', 'error');
+    showToast('로그인 정보를 입력해주세요.', 'error');
+    return;
+  }
+
   try {
-    const res = await apiFetch('/users/login', { // 로그인 API 호출
+    const res = await apiFetch('/users/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
-    const token = res.data?.token || res.token; // 응답에서 토큰 꺼내기
-    localStorage.setItem('token', token); // 토큰 저장하고 이후 인증 필요 API에서 사용
-    alert('로그인 성공!');
-    location.href = 'posts.html'; // 글 목록으로 이동
+    const token = res.data?.token || res.token;
+    localStorage.setItem('token', token);
+
+    if (msgSel) setInlineMessage(msgSel, '로그인 성공! 게시글 목록으로 이동합니다.', 'success');
+    showToast('로그인 성공!', 'success');
+    location.href = 'posts.html';
   } catch (err) {
-    alert('로그인 실패: ' + err.message);
+    console.error('[login] error', err);
+    if (msgSel) setInlineMessage(msgSel, '이메일 또는 비밀번호가 올바르지 않습니다.', 'error');
+    showToast('로그인에 실패했습니다.', 'error');
   }
 });

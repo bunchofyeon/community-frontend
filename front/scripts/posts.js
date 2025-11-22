@@ -1,10 +1,9 @@
-// week5/scripts/posts.js
-import { renderHeader /*, requireAuth */ } from './common.js';
+// posts.js
+import { renderHeader, showToast } from './common.js';
 import { apiFetch } from './api.js';
 
 renderHeader('posts');
-// 공개 목록이면 requireAuth()는 생략 가능
-// requireAuth();
+// 공개목록이라 requireAuth()는 생략
 
 const listEl = document.getElementById('postList');
 const pagerEl = document.getElementById('pagination');
@@ -87,7 +86,7 @@ async function loadPosts() {
     renderPagination(uiPage, totalPages);
   } catch (err) {
     console.error('[posts] list load error', err);
-    alert('목록 불러오기 실패: ' + (err?.message || '알 수 없는 오류'));
+    showToast('게시글 목록 불러오기에 실패했습니다.', 'error');
   }
 }
 

@@ -1,3 +1,4 @@
+// server.js
 const path = require('path');
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
@@ -17,9 +18,7 @@ app.get('/', (req, res) => {
 // 보안, 압축, 로그 미들웨어
 app.use(
   helmet({
-    contentSecurityPolicy: false,   // CSP 끔 (개발 중)
-    crossOriginEmbedderPolicy: false,
-    crossOriginResourcePolicy: { policy: "cross-origin" }
+    contentSecurityPolicy: false
   })
 );
 app.use(compression());
